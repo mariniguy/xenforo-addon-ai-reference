@@ -2068,6 +2068,130 @@ protected function setupThreadCreate(\XF\Entity\Forum $forum)
 > constructor, expose `setX()` configurers, and a terminal method (`save()`/`run()`). Use a
 > `_save()` that runs inside a DB transaction where appropriate.
 
+### Writing a new Service from scratch
+
+```php title="src/addons/Demo/Portal/Service/FeaturedThread/Creator.php"
+<?php
+
+namespace Demo\Portal\Service\FeaturedThread;
+
+use XF\Service\AbstractService;
+use XF\Service\ValidateAndSavableTrait;
+
+class Creator extends AbstractService
+{
+    use ValidateAndSavableTrait;
+
+    /** @var \XF\Entity\Thread */
+    protected $thread;
+
+    /** @var \Demo\Portal\Entity\FeaturedThread */
+    protected $featuredThread;
+
+    protected $errors = [];
+
+    public function __construct(\XF\App $app, \XF\Entity\Thread $thread)
+    {
+        parent::__construct($app);
+        $this->thread = $thread;
+        $this->featuredThread = $this->em()->create('Demo\Portal:FeaturedThread');
+        $this->featuredThread->thread_id = $thread->thread_id;
+    }
+
+    public function getFeaturedThread(): \Demo\Portal\Entity\FeaturedThread
+    {
+        return $this->featuredThread;
+    }
+
+    public function setFeaturedDate(int $timestamp): self
+    {
+        $this->featuredThread->featured_date = $timestamp;
+        return $this;
+    }
+
+    // Called by ValidateAndSavableTrait::validate()
+    protected function _validate(): array
+    {
+        $this->featuredThread->preSave();
+        return $this->featuredThread->getErrors();
+    }
+
+    // Called by ValidateAndSavableTrait::save()
+    protected function _save(): \Demo\Portal\Entity\FeaturedThread
+    {
+        $db = $this->db();
+        $db->beginTransaction();
+
+        try
+        {
+            $this->featuredThread->save(false); // false = don't run preSave again
+            $this->thread->fastUpdate('demo_portal_featured', true);
+            $db->commit();
+        }
+        catch (\Exception $e)
+        {
+            $db->rollback();
+            throw $e;
+        }
+
+        return $this->featuredThread;
+    }
+}
+```
+
+**Using it from a controller:**
+
+```php
+/** @var \Demo\Portal\Service\FeaturedThread\Creator $creator */
+$creator = $this->service('Demo\Portal:FeaturedThread\Creator', $thread);
+$creator->setFeaturedDate(\XF::$time);
+
+if (!$creator->validate($errors))
+{
+    return $this->error($errors);
+}
+
+$featuredThread = $creator->save();
+return $this->redirect($this->buildLink('demo-portal'));
+```
+
+**`ValidateAndSavableTrait`** provides `validate(&$errors)` and `save()` methods that call
+your `_validate()` and `_save()`. This is the standard XF service pattern.
+
+### Service without the trait (manual pattern)
+
+```php title="src/addons/Demo/Portal/Service/FeaturedThread/Deleter.php"
+<?php
+
+namespace Demo\Portal\Service\FeaturedThread;
+
+use XF\Service\AbstractService;
+
+class Deleter extends AbstractService
+{
+    /** @var \Demo\Portal\Entity\FeaturedThread */
+    protected $featuredThread;
+
+    public function __construct(\XF\App $app, \Demo\Portal\Entity\FeaturedThread $featuredThread)
+    {
+        parent::__construct($app);
+        $this->featuredThread = $featuredThread;
+    }
+
+    public function delete(): void
+    {
+        $thread = $this->featuredThread->Thread;
+
+        $this->featuredThread->delete();
+
+        if ($thread)
+        {
+            $thread->fastUpdate('demo_portal_featured', false);
+        }
+    }
+}
+```
+
 ---
 
 ## 24. Jobs / deferred tasks
@@ -2187,6 +2311,185 @@ your route's **section context** to an existing tab (as the portal does with `ho
 > An admin route + an admin controller (`Vendor\AddOn\Admin\Controller\X`) + an admin
 > navigation entry whose link matches the route prefix = a working ACP page. Section context on
 > the admin route should be the navigation entry's ID so it highlights.
+
+### Full ACP CRUD page example
+
+This is the complete pattern for an admin page that lists, creates, edits, and deletes records.
+
+**Step 1 — Admin route** (ACP → Development → Routes → Add route: Admin)
+- Route prefix: `demo-portal`
+- Section context: `demoPortal` (matches your nav entry ID)
+- Controller: `Demo\Portal:Settings` → resolves to `Demo\Portal\Admin\Controller\Settings`
+
+**Step 2 — Admin navigation entry** (ACP → Development → Admin navigation)
+- Navigation ID: `demoPortal`
+- Parent: `tools` (or any existing parent)
+- Link: `demo-portal/` (note trailing slash)
+- Title phrase: `demo_portal_acp_nav`
+
+**Step 3 — Admin controller**
+
+```php title="src/addons/Demo/Portal/Admin/Controller/Settings.php"
+<?php
+
+namespace Demo\Portal\Admin\Controller;
+
+use XF\Admin\Controller\AbstractController;
+use XF\Mvc\FormAction;
+use XF\Mvc\ParameterBag;
+
+class Settings extends AbstractController
+{
+    // List all records — shown at index.php?admin/demo-portal/
+    public function actionIndex()
+    {
+        $finder = $this->finder('Demo\Portal:FeaturedThread')
+            ->with('Thread', true)
+            ->setDefaultOrder('featured_date', 'DESC');
+
+        $viewParams = [
+            'featuredThreads' => $finder->fetch(),
+        ];
+        return $this->view('Demo\Portal:Settings\Index', 'demo_portal_acp_index', $viewParams);
+    }
+
+    // Show add form
+    public function actionAdd()
+    {
+        /** @var \Demo\Portal\Entity\FeaturedThread $featuredThread */
+        $featuredThread = $this->em()->create('Demo\Portal:FeaturedThread');
+        return $this->featuredThreadAddEdit($featuredThread);
+    }
+
+    // Show edit form
+    public function actionEdit(ParameterBag $params)
+    {
+        $featuredThread = $this->assertRecordExists('Demo\Portal:FeaturedThread', $params->thread_id);
+        return $this->featuredThreadAddEdit($featuredThread);
+    }
+
+    // Shared add/edit view builder
+    protected function featuredThreadAddEdit(\Demo\Portal\Entity\FeaturedThread $featuredThread)
+    {
+        $viewParams = [
+            'featuredThread' => $featuredThread,
+        ];
+        return $this->view('Demo\Portal:Settings\Edit', 'demo_portal_acp_edit', $viewParams);
+    }
+
+    // Handle save (both add and edit POST to here)
+    public function actionSave(ParameterBag $params)
+    {
+        $this->assertPostOnly();
+
+        if ($params->thread_id)
+        {
+            $featuredThread = $this->assertRecordExists('Demo\Portal:FeaturedThread', $params->thread_id);
+        }
+        else
+        {
+            $featuredThread = $this->em()->create('Demo\Portal:FeaturedThread');
+        }
+
+        $form = $this->formAction();
+        $form->basicEntitySave($featuredThread, $this->getFormInput());
+
+        $form->run();
+        return $this->redirect($this->buildLink('demo-portal'));
+    }
+
+    // Handle delete
+    public function actionDelete(ParameterBag $params)
+    {
+        $featuredThread = $this->assertRecordExists('Demo\Portal:FeaturedThread', $params->thread_id);
+
+        if ($this->isPost())
+        {
+            $featuredThread->delete();
+            return $this->redirect($this->buildLink('demo-portal'));
+        }
+
+        $viewParams = ['featuredThread' => $featuredThread];
+        return $this->view('Demo\Portal:Settings\Delete', 'demo_portal_acp_delete_confirm', $viewParams);
+    }
+
+    // Extract and validate form input
+    protected function getFormInput()
+    {
+        return $this->filter([
+            'thread_id'     => 'uint',
+            'featured_date' => 'datetime',
+        ]);
+    }
+
+    // Controller-level permission check — called automatically before every action
+    protected function preDispatch($action, ParameterBag $params): void
+    {
+        parent::preDispatch($action, $params);
+        if (!\XF::visitor()->hasPermission('general', 'manageAddOns'))
+        {
+            throw $this->exception($this->noPermission());
+        }
+    }
+}
+```
+
+**Step 4 — Admin templates**
+
+```html title="src/addons/Demo/Portal/_output/templates/admin/demo_portal_acp_index.html"
+<xf:title>{{ phrase('demo_portal_acp_title') }}</xf:title>
+
+<xf:actionbar>
+    <a href="{{ link('demo-portal/add') }}" class="button button--primary">
+        {{ phrase('add_featured_thread') }}
+    </a>
+</xf:actionbar>
+
+<div class="block">
+    <div class="block-container">
+        <table class="dataTable">
+            <thead>
+                <tr>
+                    <th>{{ phrase('thread') }}</th>
+                    <th>{{ phrase('featured_date') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <xf:foreach loop="$featuredThreads" value="$featuredThread">
+                    <tr>
+                        <td>{$featuredThread.Thread.title}</td>
+                        <td><xf:date time="{$featuredThread.featured_date}" /></td>
+                        <td>
+                            <a href="{{ link('demo-portal/edit', $featuredThread) }}">{{ phrase('edit') }}</a>
+                            <a href="{{ link('demo-portal/delete', $featuredThread) }}">{{ phrase('delete') }}</a>
+                        </td>
+                    </tr>
+                <xf:else />
+                    <tr><td colspan="3">{{ phrase('no_items_found') }}</td></tr>
+                </xf:foreach>
+            </tbody>
+        </table>
+    </div>
+</div>
+```
+
+```html title="src/addons/Demo/Portal/_output/templates/admin/demo_portal_acp_edit.html"
+<xf:title>{{ phrase($featuredThread.thread_id ? 'edit_featured_thread' : 'add_featured_thread') }}</xf:title>
+
+<xf:breadcrumb href="{{ link('demo-portal') }}">{{ phrase('demo_portal_acp_title') }}</xf:breadcrumb>
+
+<xf:form action="{{ link($featuredThread.thread_id ? 'demo-portal/save' : 'demo-portal/save', $featuredThread) }}"
+    ajax="true" class="block">
+    <div class="block-container">
+        <div class="block-body">
+            <xf:numberboxrow name="thread_id" value="{$featuredThread.thread_id}"
+                label="{{ phrase('thread_id') }}" required="true" />
+        </div>
+        <xf:submitrow sticky="true" icon="save" />
+    </div>
+</xf:form>
+```
 
 ---
 
@@ -2376,6 +2679,99 @@ Your add-on ships CSS as LESS templates (CSS-type templates) and includes them w
 `<xf:css src="..." />`. Use **style properties** (`{{ property('...') }}` / `prop()`) for
 theme-aware values. XF's framework classes (`block`, `block-container`, `message`,
 `contentRow`, `listInline`, `u-muted`, etc.) keep add-on UIs consistent.
+
+### CSS/LESS templates
+
+Create a CSS template in ACP → Appearance → Templates, switch to the "CSS" tab. The template
+title conventionally ends in `.less` (e.g. `demo_portal.less`).
+
+```css title="demo_portal.less template"
+/* Access XF style properties for theme-aware colors */
+.demoPortal-featured
+{
+    background: {{ property('contentBackground') }};
+    border: 1px solid {{ property('borderColor') }};
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.demoPortal-featured-title
+{
+    color: {{ property('textColor') }};
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.demoPortal-featured-meta
+{
+    color: {{ property('mutedTextColor') }};
+    font-size: 0.9em;
+}
+```
+
+Include it in your template:
+
+```html
+<xf:css src="demo_portal.less" />
+```
+
+### Style properties
+
+XF has ~150 built-in style properties. Reference them in LESS templates with
+`{{ property('propertyName') }}` or `prop('propertyName')`. Common ones:
+
+| Property | Purpose |
+|----------|---------|
+| `contentBackground` | Main content area background |
+| `pageBackground` | Page/body background |
+| `textColor` | Default text color |
+| `mutedTextColor` | Subdued/hint text |
+| `linkColor` | Default link color |
+| `borderColor` | Standard border color |
+| `primaryColor` | Brand/accent color |
+| `buttonBg` | Button background |
+
+### XF CSS framework classes
+
+Use these in your templates for consistent styling:
+
+```html
+<!-- Block layout -->
+<div class="block">
+    <div class="block-container">
+        <h3 class="block-header">Title</h3>
+        <div class="block-body">
+            <div class="block-row">Row content</div>
+        </div>
+        <div class="block-footer">Footer</div>
+    </div>
+</div>
+
+<!-- Content rows (horizontal layout) -->
+<div class="contentRow contentRow--alignMiddle">
+    <div class="contentRow-figure"><!-- avatar/icon --></div>
+    <div class="contentRow-main"><!-- main content --></div>
+    <div class="contentRow-minor"><!-- meta/actions --></div>
+</div>
+
+<!-- Messages (posts) -->
+<div class="message message--post">
+    <div class="message-inner">
+        <div class="message-cell message-cell--main">
+            <div class="message-content">...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Utility classes -->
+<span class="u-muted">Muted text</span>
+<ul class="listInline listInline--bullet">
+    <li>Item 1</li>
+    <li>Item 2</li>
+</ul>
+```
+
+### Designer mode (VCS-friendly style editing)
 
 **Designer mode** edits a style's templates/properties on disk (for VCS/collaboration):
 
@@ -2636,6 +3032,961 @@ page for the exhaustive tag/function/filter list.
 Targets XenForo 2.3.x. For the exhaustive template tag/function/filter reference and the full
 REST endpoint list, consult `manual/reference/template-syntax` and the API reference in that
 same documentation set.*
+
+---
+
+## 34. Custom template functions & filters via `templater_setup`
+
+Register your own template functions and filters without modifying core files. Use the
+`templater_setup` code event.
+
+```php title="src/addons/Demo/Portal/Listener.php (add this method)"
+public static function templaterSetup(\XF\Container $container, \XF\Template\Templater &$templater)
+{
+    // Register a custom function: {{ demo_featured_count() }}
+    $templater->addFunction('demo_featured_count', function(\XF\Template\Templater $templater, &$escape)
+    {
+        $escape = false; // we return safe HTML / trusted value
+        return (string)\XF::finder('Demo\Portal:FeaturedThread')->total();
+    });
+
+    // Register a custom filter: {$value|demo_truncate(100)}
+    $templater->addFilter('demo_truncate', function($value, array $args)
+    {
+        $length = $args[0] ?? 100;
+        return mb_strlen($value) > $length ? mb_substr($value, 0, $length) . '…' : $value;
+    });
+}
+```
+
+Register the listener: event `templater_setup`, callback `Demo\Portal\Listener::templaterSetup`
+(no hint needed — fires for every templater instance).
+
+Use in templates:
+
+```html
+<p>{{ demo_featured_count() }} featured threads</p>
+<p>{$thread.title|demo_truncate(80)}</p>
+```
+
+---
+
+## 35. Writing a content-type handler (Attachment example)
+
+To add attachment support to a custom content type, implement an attachment handler.
+
+```php title="src/addons/Demo/Portal/Attachment/ItemHandler.php"
+<?php
+
+namespace Demo\Portal\Attachment;
+
+use XF\Attachment\AbstractHandler;
+
+class ItemHandler extends AbstractHandler
+{
+    // Return the entity associated with the given content ID
+    public function getContext($contentId, array $extraParams = []): ?\XF\Mvc\Entity\Entity
+    {
+        return \XF::em()->find('Demo\Portal:Item', $contentId);
+    }
+
+    // Check if the visitor may add attachments to this content
+    public function canView(\XF\Mvc\Entity\Entity $container, \XF\Entity\Attachment $attachment, &$error = null): bool
+    {
+        /** @var \Demo\Portal\Entity\Item $container */
+        return $container->canView($error);
+    }
+
+    public function canManageAttachments(\XF\Mvc\Entity\Entity $container, &$error = null): bool
+    {
+        /** @var \Demo\Portal\Entity\Item $container */
+        return $container->canEdit($error);
+    }
+
+    // How many attachments are allowed per content item (null = unlimited)
+    public function getMaxAttachmentCount(): ?int
+    {
+        return \XF::options()->demoPortalMaxAttachments ?: null;
+    }
+
+    // Called after attachments are associated with content; use to update cached count
+    public function onAttachmentDelete(\XF\Mvc\Entity\Entity $container, \XF\Entity\Attachment $attachment): void
+    {
+        if ($container)
+        {
+            $container->fastUpdate('attach_count', max(0, $container->attach_count - 1));
+        }
+    }
+}
+```
+
+Register this handler (ACP → Development → Content types):
+- Content type: `demo_item`
+- Field name: `attachment_handler_class`
+- Field value: `Demo\Portal\Attachment\ItemHandler`
+
+Your entity must declare: `$structure->contentType = 'demo_item';`
+
+---
+
+## 36. Alert handler
+
+Add alert support so your content type can send alerts to users.
+
+```php title="src/addons/Demo/Portal/Alert/ItemHandler.php"
+<?php
+
+namespace Demo\Portal\Alert;
+
+use XF\Alert\AbstractHandler;
+
+class ItemHandler extends AbstractHandler
+{
+    // Return the title of the content for alert display
+    public function getEntityWith(): array
+    {
+        return ['Item'];
+    }
+
+    public function canViewContent(\XF\Entity\Alert $alert, &$error = null): bool
+    {
+        $item = $this->getContent($alert->content_id);
+        return $item && $item->canView($error);
+    }
+
+    public function getContentTitle(\XF\Entity\Alert $alert): string
+    {
+        $item = $this->getContent($alert->content_id);
+        return $item ? $item->title : '';
+    }
+
+    public function getContentUrl(\XF\Entity\Alert $alert, bool $withPush = false): string
+    {
+        $item = $this->getContent($alert->content_id);
+        return $item ? \XF::app()->router('public')->buildLink('demo-items', $item) : '';
+    }
+}
+```
+
+**Sending an alert from code:**
+
+```php
+/** @var \XF\Repository\UserAlert $alertRepo */
+$alertRepo = \XF::repository('XF:UserAlert');
+$alertRepo->alert(
+    $recipientUser,      // \XF\Entity\User to notify
+    $senderUser,         // \XF\Entity\User who triggered it (or null for system)
+    $senderUsername,     // string username
+    'demo_item',         // content type
+    $item->item_id,      // content ID
+    'featured'           // action (e.g. 'featured', 'commented', 'replied')
+);
+```
+
+Register in content type fields:
+- Content type: `demo_item`
+- Field name: `alert_handler_class`
+- Field value: `Demo\Portal\Alert\ItemHandler`
+
+Alert phrase naming: `alerts.demo_item_featured` (pattern: `alerts.<content_type>_<action>`)
+
+---
+
+## 37. Report handler
+
+Allow users to report your content type.
+
+```php title="src/addons/Demo/Portal/Report/ItemHandler.php"
+<?php
+
+namespace Demo\Portal\Report;
+
+use XF\Report\AbstractHandler;
+
+class ItemHandler extends AbstractHandler
+{
+    public function canReport(\XF\Mvc\Entity\Entity $content, \XF\Entity\User $reporter, &$error = null): bool
+    {
+        /** @var \Demo\Portal\Entity\Item $content */
+        return $content->canView() && \XF::visitor()->user_id;
+    }
+
+    public function getContentTitle(\XF\Entity\Report $report): string
+    {
+        $item = $this->getContent($report->content_id);
+        return $item ? \XF::phrase('demo_portal_item') . ': ' . $item->title : '';
+    }
+
+    public function getContentUrl(\XF\Entity\Report $report): string
+    {
+        $item = $this->getContent($report->content_id);
+        return $item ? \XF::app()->router('public')->buildLink('canonical:demo-items', $item) : '';
+    }
+
+    public function getContentForReport(\XF\Mvc\Entity\Entity $content): string
+    {
+        /** @var \Demo\Portal\Entity\Item $content */
+        return $content->description ?? '';
+    }
+
+    public function canView(\XF\Entity\Report $report, &$error = null): bool
+    {
+        $item = $this->getContent($report->content_id);
+        return (bool)$item;
+    }
+}
+```
+
+Register:
+- Field name: `report_handler_class`
+- Field value: `Demo\Portal\Report\ItemHandler`
+
+---
+
+## 38. Approval queue handler
+
+Content that supports a moderation/approval queue needs an approval queue handler.
+
+```php title="src/addons/Demo/Portal/ApprovalQueue/ItemHandler.php"
+<?php
+
+namespace Demo\Portal\ApprovalQueue;
+
+use XF\ApprovalQueue\AbstractHandler;
+
+class ItemHandler extends AbstractHandler
+{
+    // Load and return the content entity for a given ID
+    protected function loadContent($id): ?\XF\Mvc\Entity\Entity
+    {
+        return \XF::em()->find('Demo\Portal:Item', $id, ['User']);
+    }
+
+    // Can the current visitor approve/deny this content?
+    public function canActionContent(\XF\Mvc\Entity\Entity $content, &$error = null): bool
+    {
+        return \XF::visitor()->hasPermission('demo_portal', 'approveItems');
+    }
+
+    // Approve: change state to visible
+    public function actionApprove(\XF\Mvc\Entity\Entity $content): void
+    {
+        /** @var \Demo\Portal\Entity\Item $content */
+        $content->item_state = 'visible';
+        $content->save();
+    }
+
+    // Deny: change state to deleted (or soft-delete)
+    public function actionDelete(\XF\Mvc\Entity\Entity $content, \XF\Entity\User $actor): void
+    {
+        /** @var \Demo\Portal\Entity\Item $content */
+        $content->item_state = 'deleted';
+        $content->save();
+    }
+}
+```
+
+**Submitting content to the approval queue:**
+
+```php
+// In your entity's _postSave() or in a service's _save()
+if ($this->isInsert() && $this->item_state === 'moderated')
+{
+    /** @var \XF\Repository\ApprovalQueue $approvalRepo */
+    $approvalRepo = $this->repository('XF:ApprovalQueue');
+    $approvalRepo->insertIntoApprovalQueue('demo_item', $this->item_id);
+}
+```
+
+Register:
+- Field name: `approval_queue_handler_class`
+- Field value: `Demo\Portal\ApprovalQueue\ItemHandler`
+
+---
+
+## 39. Transactions and raw DB patterns
+
+```php
+$db = \XF::db();
+
+// Transaction
+$db->beginTransaction();
+try
+{
+    $db->query('UPDATE xf_demo SET ... WHERE ...', [...]);
+    $db->query('INSERT INTO xf_demo_log ...', [...]);
+    $db->commit();
+}
+catch (\Exception $e)
+{
+    $db->rollback();
+    throw $e;
+}
+
+// Insert
+$db->insert('xf_demo', [
+    'user_id'      => $userId,
+    'created_date' => \XF::$time,
+    'title'        => $title,
+]);
+$insertId = $db->lastInsertId();
+
+// Update
+$db->update('xf_demo', ['title' => $newTitle], 'demo_id = ?', $demoId);
+
+// Delete
+$db->delete('xf_demo', 'demo_id = ?', $demoId);
+
+// fetchPairs: returns [key => value] for a 2-column query
+$idToTitle = $db->fetchPairs('SELECT demo_id, title FROM xf_demo LIMIT 100');
+```
+
+### Schema: all column types and options
+
+```php
+$sm->createTable('xf_demo_full_example', function(\XF\Db\Schema\Create $table)
+{
+    // Auto-increment primary key (unsigned int)
+    $table->addColumn('id', 'int')->autoIncrement();
+
+    // Integers
+    $table->addColumn('user_id', 'int')->setDefault(0);
+    $table->addColumn('signed_int', 'int')->unsigned(false)->setDefault(0);
+    $table->addColumn('tiny', 'tinyint')->setDefault(0);    // 0-255 unsigned
+    $table->addColumn('big', 'bigint')->setDefault(0);
+
+    // Strings
+    $table->addColumn('title', 'varchar', 150)->setDefault('');
+    $table->addColumn('slug', 'varchar', 150)->setDefault('');
+    $table->addColumn('body', 'mediumtext')->nullable(true);
+    $table->addColumn('data_blob', 'blob')->nullable(true);
+
+    // Decimals
+    $table->addColumn('score', 'decimal', '10,2')->setDefault(0.00);
+    $table->addColumn('amount', 'float')->setDefault(0);
+
+    // Boolean (stored as tinyint 0/1)
+    $table->addColumn('is_active', 'tinyint', 1)->setDefault(1);
+
+    // JSON stored as mediumblob (use entity type self::JSON_ARRAY to auto-encode/decode)
+    $table->addColumn('options', 'mediumblob')->nullable(true);
+
+    // Timestamps
+    $table->addColumn('created_date', 'int')->setDefault(0);
+    $table->addColumn('modified_date', 'int')->setDefault(0);
+
+    // Indexes
+    $table->addKey('user_id');                              // plain index
+    $table->addKey(['user_id', 'created_date'], 'user_date_idx'); // compound index
+    $table->addUniqueKey('slug', 'slug_unique');            // unique index
+
+    // Primary key (auto-increment handles this automatically, shown for composite PKs)
+    // $table->addPrimaryKey(['col_a', 'col_b']);
+});
+```
+
+---
+
+## 40. The `\XF\App` container — useful services
+
+```php
+$app = \XF::app();
+
+// Job manager
+$app->jobManager()->enqueue('Demo\Portal:MyJob', ['key' => 'value']);
+$app->jobManager()->enqueueUnique('uniqueKey', 'Demo\Portal:MyJob', []);
+
+// Mailer
+$mail = $app->mailer()->newMail();
+$mail->setTo($user->email, $user->username)
+     ->setTemplate('demo_portal_notification', ['user' => $user])
+     ->send();
+
+// HTTP client (Guzzle wrapper)
+$response = $app->http()->reader()->getUntrusted('https://api.example.com/data', [], $error);
+if ($response)
+{
+    $body = $response->getBody()->getContents();
+    $data = json_decode($body, true);
+}
+
+// Error / exception logging
+$app->logException($e, false, 'Demo Portal: ');
+\XF::logError('Something went wrong: ' . $message);
+
+// Data registry (fast key-value cache, survives across requests)
+$app->registry()->set('demo_portal_cache_key', $data);
+$cached = $app->registry()->get('demo_portal_cache_key');
+$app->registry()->delete('demo_portal_cache_key');
+
+// SimpleCache (per-request, not persisted)
+$app->simpleCache()->setValue('Demo\Portal', 'key', $value);
+$value = $app->simpleCache()->getValue('Demo\Portal', 'key');
+
+// Criteria
+/** @var \XF\Criteria\User $criteria */
+$criteria = $app->criteria('XF:User', $savedUserCriteria);
+if ($criteria->isMatched(\XF::visitor())) { /* ... */ }
+
+// Router
+$url = $app->router('public')->buildLink('canonical:demo-portal');
+$url = $app->router('admin')->buildLink('demo-portal');
+
+// Input / request
+$request = $app->request();
+$ip = $request->getIp();
+$isHttps = $request->isSecure();
+```
+
+---
+
+## 41. Common entity behaviors
+
+Behaviors add reusable lifecycle logic to entities. Declare in entity structure:
+
+```php
+$structure->behaviors = [
+    'XF:ChangeLoggable' => [],         // track field changes in xf_change_log
+    'XF:Likeable'       => [],         // enable reactions/likes (requires reaction handler)
+    'XF:NewsFeedPublishable' => [      // publish to news feed
+        'usernameField' => 'username',
+        'dateField'     => 'post_date',
+    ],
+];
+```
+
+**Common behaviors:**
+
+| Behavior | What it does |
+|----------|-------------|
+| `XF:ChangeLoggable` | Logs changes to specified fields in `xf_change_log` |
+| `XF:Likeable` | Hooks reaction counting into save/delete |
+| `XF:NewsFeedPublishable` | Pushes inserts/deletes to the news feed |
+| `XF:Taggable` | Enables tag support (requires tag handler) |
+| `XF:Bookmarkable` | Enables bookmarks (requires bookmark handler) |
+| `XF:Votable` | Enables content voting (requires vote handler) |
+
+---
+
+## 42. Data XML reference (_data files)
+
+When you create things in the ACP with dev mode on, they export as XML to `_data/`. Here's
+what each file looks like — useful for understanding the format when writing/checking manually.
+
+### routes.xml
+
+```xml title="src/addons/Demo/Portal/_data/routes.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+    <route type="public" route_prefix="portal"
+        section_context="home"
+        controller="Demo\Portal:Portal"
+        format=""
+        build_link="data_only_slash"
+    />
+</routes>
+```
+
+### code_event_listeners.xml
+
+```xml title="src/addons/Demo/Portal/_data/code_event_listeners.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<code_event_listeners>
+    <listener event_id="entity_structure"
+        execute_order="10"
+        callback_class="Demo\Portal\Listener"
+        callback_method="forumEntityStructure"
+        active="1"
+        hint="XF\Entity\Forum"
+        description="Extends the XF\Entity\Forum structure"
+    />
+    <listener event_id="entity_post_save"
+        execute_order="10"
+        callback_class="Demo\Portal\Listener"
+        callback_method="threadEntityPostSave"
+        active="1"
+        hint="XF\Entity\Thread"
+        description=""
+    />
+</code_event_listeners>
+```
+
+### class_extensions.xml
+
+```xml title="src/addons/Demo/Portal/_data/class_extensions.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<class_extensions>
+    <extension base_class_name="XF\Pub\Controller\Forum"
+        extension_class_name="Demo\Portal\XF\Pub\Controller\Forum"
+        active="1"
+    />
+    <extension base_class_name="XF\Service\Thread\Creator"
+        extension_class_name="Demo\Portal\XF\Service\Thread\Creator"
+        active="1"
+    />
+</class_extensions>
+```
+
+### option_groups.xml + options.xml
+
+```xml title="src/addons/Demo/Portal/_data/option_groups.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<option_groups>
+    <group group_id="demoPortal" display_order="1000" debug_only="0" advanced="0">
+        <title>Demo - Portal options</title>
+        <description>Options for the Demo Portal add-on.</description>
+    </group>
+</option_groups>
+```
+
+```xml title="src/addons/Demo/Portal/_data/options.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<options>
+    <option option_id="demoPortalFeaturedPerPage" group_id="demoPortal"
+        display_order="10" edit_format="spinbox" data_type="posint"
+        sub_options="" advanced="0">
+        <default_value>10</default_value>
+        <format_params></format_params>
+        <title>Featured threads per page</title>
+        <explain></explain>
+    </option>
+    <option option_id="demoPortalDefaultSort" group_id="demoPortal"
+        display_order="20" edit_format="radio" data_type="string"
+        sub_options="" advanced="0">
+        <default_value>featured_date</default_value>
+        <format_params>featured_date={{ phrase('demo_portal_featured_date') }}
+post_date={{ phrase('demo_portal_post_date') }}</format_params>
+        <title>Default sort order</title>
+        <explain></explain>
+    </option>
+</options>
+```
+
+### permission_groups.xml + permissions.xml
+
+```xml title="src/addons/Demo/Portal/_data/permission_groups.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<permission_groups>
+    <!-- Usually you add to an existing group (e.g. 'forum') rather than creating a new one -->
+</permission_groups>
+```
+
+```xml title="src/addons/Demo/Portal/_data/permissions.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permission permission_id="demoPortalFeature" permission_group_id="forum"
+        permission_type="flag" interface_group_id="forumModerator"
+        display_order="1000">
+        <title>Can feature / unfeature threads</title>
+    </permission>
+</permissions>
+```
+
+### widget_positions.xml
+
+```xml title="src/addons/Demo/Portal/_data/widget_positions.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<widget_positions>
+    <position position_id="demo_portal_view_sidebar" active="1">
+        <title>Demo portal view: Sidebar</title>
+        <description>Sidebar on the portal view page.</description>
+    </position>
+</widget_positions>
+```
+
+### phrases.xml
+
+```xml title="src/addons/Demo/Portal/_data/phrases.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<phrases>
+    <phrase title="demo_portal_featured" global_cache="0" version_id="0" version_string="">
+        <![CDATA[Featured]]>
+    </phrase>
+    <phrase title="demo_portal_featured_hint" global_cache="0" version_id="0" version_string="">
+        <![CDATA[Featured threads will appear on the Portal page.]]>
+    </phrase>
+    <phrase title="demo_portal_acp_title" global_cache="0" version_id="0" version_string="">
+        <![CDATA[Demo Portal]]>
+    </phrase>
+</phrases>
+```
+
+---
+
+## 43. `app_setup` and `visitor_setup` listeners
+
+These two events fire very early and let you hook the app/visitor lifecycle.
+
+### `app_setup` — run code at application boot
+
+```php
+public static function appSetup(\XF\App $app): void
+{
+    // Register a custom container binding
+    $app->container()->factory('demoPortal.myService', function($c) {
+        return new \Demo\Portal\Service\MyCustomService($c['app']);
+    });
+}
+```
+
+### `visitor_setup` — modify the visitor / permissions
+
+```php
+public static function visitorSetup(\XF\Entity\User &$visitor): void
+{
+    // Example: give a special badge to certain users
+    if ($visitor->user_group_id == 5)
+    {
+        // You can set additional properties on the visitor here
+        // but avoid doing expensive queries for every request
+    }
+}
+```
+
+### `templater_template_pre_render` — modify template params before render
+
+```php
+public static function templaterTemplatePreRender(
+    \XF\Template\Templater $templater,
+    string &$type,
+    string &$template,
+    array &$params
+): void {
+    // Add a variable to every public template
+    if ($type === 'public' && $template === 'thread_view')
+    {
+        $params['demoPortalFeatured'] =
+            \XF::finder('Demo\Portal:FeaturedThread')
+               ->where('thread_id', $params['thread']->thread_id ?? 0)
+               ->fetchOne();
+    }
+}
+```
+
+Register: event `templater_template_pre_render`, no hint (fires for all templates) or
+add a hint of `thread_view` to limit it.
+
+---
+
+## 44. Pagination pattern (complete)
+
+```php title="Controller"
+public function actionIndex()
+{
+    $page    = $this->filterPage();     // reads 'page' from request, minimum 1
+    $perPage = \XF::options()->demoPortalFeaturedPerPage;
+
+    /** @var \Demo\Portal\Repository\FeaturedThread $repo */
+    $repo   = $this->repository('Demo\Portal:FeaturedThread');
+    $finder = $repo->findFeaturedThreadsForPortalView();
+
+    $total   = $finder->total();
+    $threads = $finder->limitByPage($page, $perPage)->fetch();
+
+    $this->assertValidPage($page, $perPage, $total, 'demo-portal');
+    $this->assertCanonicalUrl($this->buildLink('demo-portal', null, ['page' => $page]));
+
+    $viewParams = [
+        'threads' => $threads,
+        'page'    => $page,
+        'perPage' => $perPage,
+        'total'   => $total,
+    ];
+    return $this->view('Demo\Portal:Index', 'demo_portal_view', $viewParams);
+}
+```
+
+```html title="Template"
+<xf:pagenav page="{$page}" perpage="{$perPage}" total="{$total}"
+    link="demo-portal" wrapperclass="block" />
+```
+
+`assertValidPage()` throws a 404 if the page number exceeds the valid range.
+`assertCanonicalUrl()` issues a redirect if the URL is not the canonical form (e.g., page 1
+should not have `?page=1` in the URL).
+
+---
+
+## 45. Full template tag reference (most-used subset)
+
+### Output & expressions
+
+```html
+{$variable}                          <!-- escaped output -->
+{$variable|raw}                      <!-- unescaped (trusted HTML only) -->
+{$variable|for_attr}                 <!-- attribute-safe escape -->
+{{ expression }}                     <!-- evaluate: math, ternary, function calls -->
+{{ $a ?: 'default' }}               <!-- null coalesce / ternary -->
+{{ $list|count }}                    <!-- filter: count -->
+{{ $value|number(2) }}              <!-- format number, 2 decimal places -->
+{{ date($timestamp, 'M j, Y') }}    <!-- format date -->
+{{ date_time($timestamp) }}         <!-- format date + time -->
+{{ phrase('phrase_name') }}         <!-- phrase lookup -->
+{{ link('route', $entity) }}        <!-- build a URL -->
+{{ bb_code($text, 'post', $user) }} <!-- render BBCode -->
+{{ avatar($user, 's') }}            <!-- user avatar (size: s/m/l) -->
+```
+
+### Control flow
+
+```html
+<xf:if is="$condition">...</xf:if>
+<xf:if is="$a AND $b">...</xf:if>
+<xf:if is="$x == 'value'">...</xf:if>
+<xf:if is="$arr is not empty">...</xf:if>
+<xf:if is="$obj instanceof \XF\Entity\User">...</xf:if>
+<xf:elseif is="$other" />
+<xf:else />
+
+<xf:foreach loop="$items" value="$item" key="$key" i="$i">
+    <!-- $i is 1-based counter -->
+<xf:else />
+    <!-- empty state -->
+</xf:foreach>
+
+<xf:set var="$myVar" value="{{ $a + $b }}" />
+```
+
+### Page structure
+
+```html
+<xf:title>Page Title</xf:title>
+<xf:h1>Visible Heading (different from tab title)</xf:h1>
+<xf:description>Meta description</xf:description>
+<xf:breadcrumb href="{{ link('forums') }}">Forums</xf:breadcrumb>
+<xf:head>
+    <!-- extra <meta> or <link> in <head> -->
+</xf:head>
+<xf:pageaction>
+    <!-- buttons/links in the page header bar -->
+</xf:pageaction>
+```
+
+### Forms — all common row types
+
+```html
+<xf:form action="{{ link('demo/save') }}" ajax="true" class="block">
+<div class="block-container"><div class="block-body">
+
+    <xf:textboxrow name="title" value="{$title}" label="Title" required="true"
+        maxlength="150" explain="Enter a short title." />
+
+    <xf:textarearow name="body" value="{$body}" label="Body" rows="5" />
+
+    <xf:numberboxrow name="count" value="{$count}" label="Count" min="0" max="999" step="1" />
+
+    <xf:selectrow name="type" value="{$type}" label="Type">
+        <xf:option value="a">Option A</xf:option>
+        <xf:option value="b">Option B</xf:option>
+    </xf:selectrow>
+
+    <!-- Select from a collection/array: [{value: v, label: l}, ...] -->
+    <xf:selectrow name="category_id" value="{$categoryId}" label="Category">
+        <xf:options source="{$categories}" valueKey="category_id" labelKey="title" />
+    </xf:selectrow>
+
+    <xf:checkboxrow label="Flags">
+        <xf:option name="is_active" value="1" selected="{$isActive}">Active</xf:option>
+        <xf:option name="is_featured" value="1" selected="{$isFeatured}">Featured</xf:option>
+    </xf:checkboxrow>
+
+    <xf:radiorrow name="sort" value="{$sort}" label="Sort by">
+        <xf:option value="date">Date</xf:option>
+        <xf:option value="title">Title</xf:option>
+    </xf:radiorrow>
+
+    <!-- Token: user autocomplete input -->
+    <xf:tokeninputrow name="user_id" label="User"
+        value="{$userId}" ac="username" />
+
+    <!-- Date picker -->
+    <xf:datetimerow name="event_date" value="{$eventDate}" label="Date" />
+
+    <!-- Hidden field -->
+    <xf:hiddenval name="addon_id" value="Demo/Portal" />
+
+    <xf:submitrow submit="Save" sticky="true" icon="save" />
+
+</div></div>
+</xf:form>
+```
+
+### User display tags
+
+```html
+<!-- Avatar -->
+<xf:avatar user="{$user}" size="s" />          <!-- sizes: xxs/xs/s/m/l -->
+<xf:avatar user="{$user}" size="m" href="{{ link('members', $user) }}" />
+<xf:avatar user="{$user}" size="l" defaultname="{$post.username}" href="" />
+
+<!-- Username with rich link/styling -->
+<xf:username user="{$user}" />
+<xf:username user="{$user}" href="{{ link('members', $user) }}" />
+
+<!-- Date display -->
+<xf:date time="{$timestamp}" />               <!-- relative ("3 hours ago") -->
+<xf:datetime time="{$timestamp}" />           <!-- absolute + relative tooltip -->
+
+<!-- Page navigation -->
+<xf:pagenav page="{$page}" perpage="{$perPage}" total="{$total}" link="portal" />
+
+<!-- Widget position -->
+<xf:widgetpos id="demo_portal_view_sidebar" position="sidebar" />
+```
+
+---
+
+## 46. `xf-make` scaffolding commands
+
+Generate boilerplate class files instantly. Consults `_stubs/` first.
+
+```sh
+# Entity
+php cmd.php xf-make:entity Demo/Portal Demo\Portal:Item xf_demo_portal_item
+
+# Controller (public)
+php cmd.php xf-make:controller Demo/Portal Demo\Portal:Item public
+
+# Controller (admin)
+php cmd.php xf-make:controller Demo/Portal Demo\Portal:Item admin
+
+# Repository
+php cmd.php xf-make:repository Demo/Portal Demo\Portal:Item
+
+# Finder
+php cmd.php xf-make:finder Demo/Portal Demo\Portal:Item
+
+# Service
+php cmd.php xf-make:service Demo/Portal Demo\Portal:Item\Creator
+
+# Job
+php cmd.php xf-make:job Demo/Portal Demo\Portal:RebuildItems
+
+# Cron
+php cmd.php xf-make:cron Demo/Portal Demo\Portal:Cleanup
+
+# Class extension (generates extended class + registers it)
+php cmd.php xf-make:class-extension Demo/Portal \
+    "XF\Entity\Thread" "Demo\Portal\XF\Entity\Thread"
+
+# Publish core stub for customization
+php cmd.php xf-make:stub-publish entity --addon=Demo/Portal
+php cmd.php xf-make:stub-publish controller --addon=Demo/Portal
+```
+
+---
+
+## 47. Common gotchas not in the official docs
+
+### Entity `_postSave` enqueue pattern
+
+Always check `isInsert()` or `isUpdate()` + `isChanged()` before doing work in `_postSave` to
+avoid running expensive logic on every save:
+
+```php
+protected function _postSave()
+{
+    if ($this->isInsert())
+    {
+        // Only on new records
+        $this->app()->jobManager()->enqueue('Demo\Portal:ProcessNew', ['id' => $this->item_id]);
+    }
+
+    if ($this->isUpdate() && $this->isChanged('title'))
+    {
+        // Only when title changed on an existing record
+        $this->app()->jobManager()->enqueueUnique(
+            'demoPortalRebuildSlug_' . $this->item_id,
+            'Demo\Portal:RebuildSlug',
+            ['item_id' => $this->item_id]
+        );
+    }
+}
+```
+
+### `fastUpdate` vs `save`
+
+```php
+// fastUpdate: single SQL UPDATE for one column. No lifecycle, no validation, no relations.
+// Use for cached counters/flags after the main entity has already been saved.
+$thread->fastUpdate('demo_portal_featured', true);
+
+// save: full lifecycle (preSave, validation, postSave). Use for normal writes.
+$entity->title = 'New title';
+$entity->save();
+```
+
+### `getRelationOrDefault` — the three-states pattern
+
+When a service may or may not change a relation, use `null` as "no change":
+
+```php
+protected $featureThread = null; // null = no change; true = feature; false = unfeature
+
+protected function _save()
+{
+    $thread = parent::_save();
+
+    if ($this->featureThread !== null && $thread->discussion_state === 'visible')
+    {
+        $featuredThread = $thread->getRelationOrDefault('FeaturedThread', false);
+
+        if ($this->featureThread && !$featuredThread->exists())
+        {
+            $featuredThread->save();
+            $thread->fastUpdate('demo_portal_featured', true);
+        }
+        elseif (!$this->featureThread && $featuredThread->exists())
+        {
+            $featuredThread->delete();
+            $thread->fastUpdate('demo_portal_featured', false);
+        }
+    }
+
+    return $thread;
+}
+```
+
+### CSRF is automatic for XF form tags
+
+`<xf:form>` inserts the CSRF token automatically. For manual forms or AJAX POST requests:
+```html
+<input type="hidden" name="_xfToken" value="{{ $xf.visitor.csrf_token_page }}" />
+```
+
+In a controller: `$this->assertValidCsrfToken($this->filter('_xfToken', 'str'));`
+
+### Route prefix collisions
+
+If your route prefix conflicts with an existing one, XF uses the first match. Check
+ACP → Development → Routes before picking a prefix. Admin and public routes are separate
+namespaces — the same prefix can exist in both.
+
+### `entity_structure` listener fires per-entity-class
+
+The hint (`XF\Entity\Forum`) scopes the listener to only fire when that specific entity
+class is being loaded. Without a hint, it fires for **every** entity class loaded — which is
+expensive and almost never what you want.
+
+### Phrase detection in template modifications
+
+XF auto-detects phrases used in templates. But phrases inside **template modification replace
+fields** are NOT auto-detected because they aren't parsed the same way. **Create those phrases
+manually** in ACP → Appearance → Phrases.
+
+### Development mode vs debug mode
+
+- `$config['debug'] = true` — enables the ACP dev tools toolbar and query inspector.
+- `$config['development']['enabled'] = true` — implies debug, PLUS writes `_output` files and
+  enables filesystem template editing.
+- You can have debug mode without dev mode (useful for staging). Never enable either on
+  production.
+
+### `_output` desync
+
+If `_output` and the database get out of sync (e.g., you rename a template on disk but not in
+the DB), run: `php cmd.php xf-dev:import --addon Demo/Portal` to re-sync from disk to DB, or
+`php cmd.php xf-dev:export --addon Demo/Portal` to sync from DB to disk.
 
 
 
