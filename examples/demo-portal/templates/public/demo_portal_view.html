@@ -1,0 +1,88 @@
+<xf:title>{{ phrase('demo_portal_featured_threads') }}</xf:title>
+
+<xf:navigation>
+    <xf:breadcrumb href="{{ link('portal') }}">{{ phrase('demo_portal_nav_tab') }}</xf:breadcrumb>
+</xf:navigation>
+
+<div class="p-body-main">
+    <div class="p-body-content">
+        <xf:if is="$featuredThreads is not empty">
+            <xf:foreach loop="$featuredThreads" value="$featuredThread">
+                <div class="block">
+                    <div class="block-container">
+                        <div class="block-body">
+                            <article class="message message--thread">
+                                <div class="message-inner">
+                                    <div class="message-cell message-cell--main">
+                                        <div class="message-content">
+
+                                            <h3 class="message-title">
+                                                <a href="{{ link('threads', $featuredThread.Thread) }}">
+                                                    {{ $featuredThread.Thread.title }}
+                                                </a>
+                                            </h3>
+
+                                            <div class="message-attribution">
+                                                <xf:username user="$featuredThread.Thread.User" />
+                                                &middot;
+                                                <xf:date time="$featuredThread.Thread.post_date" />
+                                                &middot;
+                                                <a href="{{ link('forums', $featuredThread.Thread.Forum) }}">
+                                                    {{ $featuredThread.Thread.Forum.title }}
+                                                </a>
+                                            </div>
+
+                                            <xf:if is="$featuredThread.Thread.FirstPost">
+                                                <div class="message-body">
+                                                    {{ bb_code($featuredThread.Thread.FirstPost.message, 'post', $featuredThread.Thread.FirstPost) | raw }}
+                                                </div>
+                                            </xf:if>
+
+                                            <div class="message-footer">
+                                                <ul class="listInline listInline--bullet">
+                                                    <li>
+                                                        <a href="{{ link('threads', $featuredThread.Thread) }}">
+                                                            {{ phrase('replies') }}: {{ $featuredThread.Thread.reply_count }}
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        {{ phrase('views') }}: {{ $featuredThread.Thread.view_count }}
+                                                    </li>
+                                                </ul>
+
+                                                <xf:if is="$xf.visitor.hasPermission('demo_portal', 'featureThread')">
+                                                    <xf:form action="{{ link('threads/demo-portal-unfeature', $featuredThread.Thread) }}" ajax="true" class="js-quickToggle">
+                                                        <xf:token />
+                                                        <button type="submit" class="button button--plain">
+                                                            {{ phrase('demo_portal_unfeature_thread') }}
+                                                        </button>
+                                                    </xf:form>
+                                                </xf:if>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </xf:foreach>
+
+            <xf:pagenav page="$page" per-page="$perPage" total="$total" link="portal" />
+
+        <xf:else />
+            <div class="blockMessage">
+                {{ phrase('no_results_found') }}
+            </div>
+        </xf:if>
+    </div>
+
+    <div class="p-body-side">
+        <xf:widget-pos id="demo_portal_sidebar" />
+    </div>
+</div>
+
+<div class="p-body-below">
+    <xf:widget-pos id="demo_portal_below_threads" />
+</div>

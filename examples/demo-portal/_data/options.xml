@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options>
+    <option id="demoPortalThreadsPerPage"
+            group_id="demoPortal"
+            display_order="10"
+            edit_format="spinbox"
+            data_type="positive_integer"
+            addon_id="Demo/Portal">
+        <title>Threads per page on portal</title>
+        <explain>Number of featured threads shown per page on the portal index.</explain>
+        <option_value>10</option_value>
+    </option>
+</options>

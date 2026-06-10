@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+    <route type="public">
+        <route_id><![CDATA[demo-portal]]></route_id>
+        <prefix><![CDATA[portal]]></prefix>
+        <controller><![CDATA[Demo\Portal\Pub\Controller\Portal]]></controller>
+        <format><![CDATA[]]></format>
+        <build_link><![CDATA[data_id]]></build_link>
+        <context><![CDATA[]]></context>
+        <action_prefix><![CDATA[]]></action_prefix>
+    </route>
+</routes>

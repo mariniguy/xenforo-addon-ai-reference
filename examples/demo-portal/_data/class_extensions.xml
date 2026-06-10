@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class_extensions>
+    <extension from_class="XF\Pub\Controller\Forum"
+               to_class="Demo\Portal\XF\Pub\Controller\Forum"
+               addon_id="Demo/Portal" />
+
+    <extension from_class="XF\Pub\Controller\Thread"
+               to_class="Demo\Portal\XF\Pub\Controller\Thread"
+               addon_id="Demo/Portal" />
+
+    <extension from_class="XF\Service\Thread\Creator"
+               to_class="Demo\Portal\XF\Service\Thread\Creator"
+               addon_id="Demo/Portal" />
+
+    <extension from_class="XF\Service\Thread\Editor"
+               to_class="Demo\Portal\XF\Service\Thread\Editor"
+               addon_id="Demo/Portal" />
+
+    <extension from_class="XF\Entity\Thread"
+               to_class="Demo\Portal\XF\Entity\Thread"
+               addon_id="Demo/Portal" />
+
+    <extension from_class="XF\Admin\Controller\Forum"
+               to_class="Demo\Portal\XF\Admin\Controller\Forum"
+               addon_id="Demo/Portal" />
+</class_extensions>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget_positions>
+    <position id="demo_portal_sidebar"
+              addon_id="Demo/Portal">
+        <title>Demo Portal: Sidebar</title>
+        <description>Widgets displayed in the sidebar of the portal page.</description>
+    </position>
+
+    <position id="demo_portal_below_threads"
+              addon_id="Demo/Portal">
+        <title>Demo Portal: Below Thread List</title>
+        <description>Widgets displayed below the featured thread list on the portal.</description>
+    </position>
+</widget_positions>

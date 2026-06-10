@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<option_groups>
+    <group id="demoPortal"
+           display_order="1000"
+           addon_id="Demo/Portal">
+        <title>Demo Portal</title>
+        <description>Settings for the Demo Portal addon.</description>
+    </group>
+</option_groups>

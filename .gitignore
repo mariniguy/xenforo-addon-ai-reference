@@ -1,0 +1,27 @@
+# XenForo source (local dev copy — not for distribution)
+_docs_src/
+
+# Add-on ZIP downloads
+addons/*.zip
+
+# XF1 add-ons (not relevant to XF2 development)
+addons/extracted/8wr-*/
+addons/extracted/xfr-*/
+addons/extracted/tinhte-*/
+addons/extracted/xenapi-*/
+addons/extracted/smiley-manager/
+addons/extracted/faq-manager-by-iversia/
+addons/extracted/bd-api/
+
+# Build output
+_build/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp

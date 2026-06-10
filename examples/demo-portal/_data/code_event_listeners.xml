@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<code_event_listeners>
+    <!--
+        Extend XF\Service\Thread\Creator so new threads in auto-feature
+        forums are immediately promoted to the portal.
+    -->
+    <listener event_id="service_setup"
+              callback_class="Demo\Portal\Listener"
+              callback_method="serviceSetup"
+              active="1"
+              hint="XF:Thread\Creator"
+              addon_id="Demo/Portal" />
+</code_event_listeners>

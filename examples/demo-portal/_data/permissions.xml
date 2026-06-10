@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permission_group id="demo_portal">
+        <title>Demo Portal</title>
+        <display_order>1000</display_order>
+
+        <permission id="view">
+            <title>View portal</title>
+            <permission_type>flag</permission_type>
+            <display_order>10</display_order>
+            <interface_group_id>general</interface_group_id>
+        </permission>
+
+        <permission id="featureThread">
+            <title>Feature / unfeature threads</title>
+            <permission_type>flag</permission_type>
+            <display_order>20</display_order>
+            <interface_group_id>general</interface_group_id>
+        </permission>
+    </permission_group>
+</permissions>

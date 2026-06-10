@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phrases>
+    <phrase title="demo_portal_nav_tab" global_cache="1" addon_id="Demo/Portal">
+        <phrase_text>Portal</phrase_text>
+    </phrase>
+    <phrase title="demo_portal_featured_threads" addon_id="Demo/Portal">
+        <phrase_text>Featured Threads</phrase_text>
+    </phrase>
+    <phrase title="demo_portal_feature_thread" addon_id="Demo/Portal">
+        <phrase_text>Feature on portal</phrase_text>
+    </phrase>
+    <phrase title="demo_portal_unfeature_thread" addon_id="Demo/Portal">
+        <phrase_text>Remove from portal</phrase_text>
+    </phrase>
+    <phrase title="demo_portal_auto_feature_forum" addon_id="Demo/Portal">
+        <phrase_text>Auto-feature threads in this forum on the portal</phrase_text>
+    </phrase>
+    <phrase title="demo_portal_featured_by_x_on_y" addon_id="Demo/Portal">
+        <phrase_text>Featured by {name} on {date}</phrase_text>
+    </phrase>
+</phrases>
