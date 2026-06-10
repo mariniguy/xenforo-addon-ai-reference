@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="SmileyManager" title="Smiley Manager" version_string="2.2.0" version_id="48" url="" install_callback_class="Milano_SmileyManager_Install" install_callback_method="install" uninstall_callback_class="Milano_SmileyManager_Install" uninstall_callback_method="uninstall">
+  <admin_navigation/>
+  <admin_permissions/>
+  <admin_style_properties/>
+  <admin_templates>
+    <template title="SmileyManager_import_choose_category"><![CDATA[<fieldset>
+	<xen:radiounit label="" name="new">
+		<xen:option value="0" selected="true" label="{xen:phrase SmileyManager_import_to_category}:">
+			<xen:select name="smilie_category_id">
+				<xen:options source="$smilieCategoryOptions" />
+			</xen:select>
+		</xen:option>
+		<xen:option value="1" label="{xen:phrase create_new_category}">
+			<xen:disabled>
+				<xen:textbox placeholder="{xen:phrase title}" name="title" />
+				{xen:phrase display_order}:
+				<xen:spinbox name="display_order" min="0" step="10" />
+			</xen:disabled>
+		</xen:option>
+	</xen:radiounit>
+</fieldset>
+]]></template>
+    <template title="SmileyManager_smilie_batch_update"><![CDATA[<xen:title>{xen:phrase SmileyManager_batch_update_smilies}</xen:title>
+
+<xen:form action="{xen:adminlink smilies/batch-update}" class="AutoValidator" data-redirect="yes">
+	<xen:controlunit label="{xen:phrase smilies}:">
+		{$totalSmilies}
+	</xen:controlunit>
+
+	<h3 class="textHeading">{xen:phrase SmileyManager_update_smilies}</h3>
+
+	<xen:selectunit label="{xen:phrase SmileyManager_select_category}:" name="smilie_category_id">
+		<xen:option value="0" label="({xen:phrase none})" />
+		<xen:options source="$smilieCategoryOptions" />
+	</xen:selectunit>
+
+	<xen:submitunit save="{xen:phrase SmileyManager_update_smilies}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+	<input type="hidden" name="smilie_ids" value="{xen:escape {xen:helper json, $smilieIds}}" />
+</xen:form>
+]]></template>
+    <template title="SmileyManager_smilie_import_sprite_image"><![CDATA[<xen:title>{xen:phrase import_smilies}</xen:title>
+
+<xen:require css="smilie_edit.css" />
+<xen:require css="spritecow.css" />
+
+<xen:require js="js/Milano/SmileyManager/smiley.js" />
+<xen:require js="js/spritecow/jquery.transition.js" />
+<xen:require js="js/spritecow/main.js" />
+
+<script type="text/javascript">
+
+	$(function()
+	{
+		$(document).on('change', 'input.Hider', function(e)
+		{
+			var $target = $($(this).data('target'));
+			
+			if (this.checked)
+			{
+				$target.xfFadeDown(XenForo.speed.fast);
+			}
+			else
+			{
+				$target.xfHide();
+			}
+		});
+		
+		$('#SmilieForm').bind('AutoValidationError', function(e)
+		{
+			var $target = $(e.target);
+			
+			if ($target.is(':hidden'))
+			{
+				$target.closest('.advanced').show();
+			}
+		});
+	});
+	
+	jQuery.extend(XenForo.phrases,
+	{	
+		add_smiley:	"{xen:jsescape {xen:phrase SmileyManager_add_smiley}}",								   
+		select_sprite: "{xen:jsescape {xen:phrase SmileyManager_select_sprite}}",
+		pick_background: "{xen:jsescape {xen:phrase SmileyManager_pick_background}}",
+		reload_current_image: "{xen:jsescape {xen:phrase SmileyManager_reload_current_image}}",
+		toggle_dark_background: "{xen:jsescape {xen:phrase SmileyManager_toggle_dark_background}}",
+		
+		select_sprite_first: "{xen:jsescape {xen:phrase SmileyManager_select_sprite_first}}",
+		incorrect_background: "{xen:jsescape {xen:phrase SmileyManager_incorrect_background}}",
+		background_set_to_x: "{xen:jsescape {xen:phrase SmileyManager_background_set_to_x}}"
+	});
+
+</script>
+
+<xen:form class="AutoValidator"
+	action="{xen:adminlink smilies/import}"
+	data-fieldvalidatorurl="{xen:adminlink 'smilies/validate-import-field.json'}"
+	data-redirect="on"
+	id="SmilieForm">
+
+
+	<div class="SmileyList"></div>
+	
+	<div class="container SpriteCow">
+		<div class="toolbar-container"></div>
+		<div class="canvas-view">
+			<div class="canvas-cell">
+				<div class="canvas-inner"></div>
+			</div>
+		</div>
+		<div class="toolbar-bottom-container"></div>
+		<div class="further-detail">
+			<div class="code-container"></div>
+			<input type="text" id="lockHeight" class="textCtrl"  />
+			<input type="text" id="lockWidth" class="textCtrl"  />
+		</div>
+	</div>
+	<div class="feature-test">
+		<h1>{xen:phrase SmileyManager_not_working_out}</h1>
+		<p>{xen:phrase SmileyManager_upgrade_browser}</p>
+	</div>
+		
+	<xen:if is="{$newSmilieCategories}">
+		<xen:foreach loop="$newSmilieCategories" key="$smilieCategoryId" value="$smilieCategory">
+			<input type="hidden" name="smilieCategories[{$smilieCategoryId}][title]" value="{$smilieCategory.title}" />
+			<input type="hidden" name="smilieCategories[{$smilieCategoryId}][display_order]" value="{$smilieCategory.display_order}" />
+		</xen:foreach>
+	</xen:if>
+		
+	<xen:submitunit save="{xen:phrase import_smilies}" />
+
+	{xen:raw $hiddenHtml}
+	<input type="hidden" id="ImageUrl" name="sprite_image" value="{$spriteImage}" />
+	<input type="hidden" name="_xfConfirm" value="1" />
+	
+</xen:form>]]></template>
+    <template title="SmileyManager_smilie_import_sprite_image_item"><![CDATA[<fieldset class="importSmilieBlock">
+		
+	<label class="importSmilieCheck"><input type="checkbox" class="Disabler notHider" id="smilie{$i}" name="import[]" value="{$i}" checked="checked" /> {xen:phrase import_this_smilie}</label>
+			
+		<div class="importSmiliePreview">
+			<img src="styles/default/xenforo/clear.png" alt="" style="
+				width: {$smilie.sprite_params.w}px;
+				height: {$smilie.sprite_params.h}px;
+				background: url('{$smilie.image_url}') no-repeat {$smilie.sprite_params.x}px {$smilie.sprite_params.y}px" />
+		</div>
+		
+		<div id="smilie{$i}_Disabler">
+			<xen:textboxunit name="smilies[{$i}][title]" value="{$smilie.title}"
+				label="{xen:phrase title}"
+				data-validatorname="title__{$i}" />
+					
+			<xen:textboxunit name="smilies[{$i}][smilie_text]" value="{$smilie.smilie_text}"
+				label="{xen:phrase text_to_replace}:"
+				rows="2" inputclass="Elastic"
+				data-validatorname="smilie_text__{$i}" />
+			
+			<xen:selectunit name="smilies[{$i}][smilie_category_id]" value="{$smilie.smilie_category_id}"
+				label="{xen:phrase smilie_category}:"
+				data-validatorname="smilie_category_id__{$i}">
+				<xen:option value="0" label="({xen:phrase none})" />
+				<xen:optgroup label="{xen:phrase new}">
+					<xen:options source="$newSmilieCategoryOptions" />
+				</xen:optgroup>
+				<xen:optgroup label="{xen:phrase existing}">
+					<xen:options source="$smilieCategoryOptions" />
+				</xen:optgroup>
+			</xen:selectunit>
+				
+			<xen:controlunit label="">
+				<xen:html><label class="importSmilieMoreOptions"><input type="checkbox" class="Hider" data-target="#smilie{$i}advanced" /> {xen:phrase more_options}...</label></xen:html>
+			</xen:controlunit>
+				
+			<div class="importSmilieAdvanced" id="smilie{$i}advanced">
+					
+				<xen:textboxunit name="smilies[{$i}][image_url]" value="{$smilie.image_url}"
+					label="{xen:phrase image_replacement_url}:"
+					data-validatorname="image_url__{$i}" />
+					
+				<xen:spinboxunit name="smilies[{$i}][display_order]" value="{$smilie.display_order}:"
+					label="{xen:phrase display_order}"
+					min="0" step="10"
+					data-validatorname="display_order__{$i}" />
+						
+				<xen:checkboxunit label="">
+					<xen:option name="smilies[{$i}][display_in_editor]" selected="{$smilie.display_in_editor}"
+						label="{xen:phrase show_this_smilie_in_the_text_editor}" />
+				</xen:checkboxunit>
+					
+				<xen:checkboxunit label="{xen:phrase sprite_mode}:">
+					<xen:option name="smilies[{$i}][sprite_mode]" selected="{$smilie.sprite_mode}"
+					label="{xen:phrase enable_sprite_mode_with_following_parameters}" />
+				</xen:checkboxunit>
+				
+				<xen:controlunit label="{xen:phrase sprite_dimensions}:">
+					<xen:spinbox name="smilies[{$i}][sprite_params][w]" value="{$smilie.sprite_params.w}" min="1" title="{xen:phrase width}" inputclass="Tooltip OptOut" />
+					<xen:spinbox name="smilies[{$i}][sprite_params][h]" value="{$smilie.sprite_params.h}" min="1" title="{xen:phrase height}" inputclass="Tooltip OptOut" />
+					px
+				</xen:controlunit>
+				
+				<xen:controlunit label="{xen:phrase sprite_position}:">
+					<xen:spinbox name="smilies[{$i}][sprite_params][x]" value="{$smilie.sprite_params.x}" title="{xen:phrase background_position_x}" inputclass="Tooltip OptOut" />
+					<xen:spinbox name="smilies[{$i}][sprite_params][y]" value="{$smilie.sprite_params.y}" title="{xen:phrase background_position_y}" inputclass="Tooltip OptOut" />
+					px
+				</xen:controlunit>
+				
+			</div>
+		</div>
+		
+</fieldset>]]></template>
+    <template title="spritecow.css"><![CDATA[.container 
+{
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    position: relative;
+    display: table;
+    table-layout: fixed;
+	margin-top: 5px;
+	padding-top: 10px;
+	/*border-top: 1px solid {xen:property primaryLighterStill};*/
+}
+.container > * 
+{
+    display: table-row; 
+}
+    .not-supported .container 
+    {
+        display: none; 
+    }
+
+	.container .canvas-cell 
+	{
+		height: 300px;
+		cursor: auto; 
+	}
+
+.toolbar-container,
+.toolbar-bottom-container 
+{
+    display: table-row;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none; 
+}
+
+.canvas-view 
+{
+    text-align: center;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none; 
+}
+    .canvas-view .upload-input 
+    {
+        position: absolute;
+        top: -5000px;
+        left: -5000px;
+        cursor: pointer;
+        z-index: 10; 
+    }
+
+    .canvas-view .lg-button 
+    {
+        display: none; 
+    }
+
+    .canvas-cell 
+    {
+      display: table-cell;
+      height: 100%;
+      position: relative; 
+    }
+
+    .canvas-inner 
+    {
+      overflow: auto;
+      background: white url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEX///8AAABVwtN+AAAAAnRSTlMzMz0oyR4AAAARSURBVAgdY/jPwIAVYRf9DwB+vw/xbMOy9QAAAABJRU5ErkJggg==");
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+      position: relative;
+      height: 100%; 
+    }
+        .opera .canvas-inner 
+        {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: auto; 
+        }
+
+    .sprite-canvas-container 
+    {
+        position: absolute;
+        min-width: 100%;
+        min-height: 100%; 
+    }
+        .sprite-canvas-container canvas 
+        {
+            display: block; 
+        }   
+        .sprite-canvas-container .highlight 
+        {
+            background: rgba(0, 90, 255, 0.25);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 5px;
+            pointer-events: none;
+            border: 1px solid rgba(0, 114, 255, 0.5);
+            box-sizing: border-box;
+            display: none;
+            -webkit-transition: 0.5s ease-in-out;
+            -moz-transition: 0.5s ease-in-out;
+            -ms-transition: 0.5s ease-in-out;
+            -o-transition: 0.5s ease-in-out;
+            transition: 0.5s ease-in-out;
+            -webkit-transition-property: border, background;
+            -moz-transition-property: border, background;
+            -ms-transition-property: border, background;
+            -o-transition-property: border, background;
+            transition-property: border, background; 
+        }
+            .sprite-canvas-container .highlight.high-vis 
+            {
+                background-color: rgba(0, 255, 48, 0.25);
+                border-color: rgba(0, 255, 51, 0.5); 
+            }
+
+.select-btn 
+{
+    margin: 0 48px 0 0; 
+}
+
+.start-buttons 
+{
+    position: absolute;
+    top: 39px;
+    left: 0;
+    width: 100%;
+    text-align: center; 
+}
+
+.drop-indicator 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(37, 207, 28, 0.2);
+    box-shadow: inset 0 0 18px #175a00;
+    display: none;
+    pointer-events: none; 
+}
+
+.drag-over .drop-indicator 
+{
+    display: block;
+    opacity: 1; 
+}
+
+.css-output 
+{
+    display: block;
+    white-space: pre;
+    padding: 20px 30px;
+    overflow: auto;
+    position: relative;
+    tab-size: 4; 
+}
+    .css-output code 
+    {
+        font-size: 1.2em;
+        line-height: 1; 
+    }
+    .css-output .file-path 
+    {
+        position: relative;
+        display: inline-block; 
+    }
+        .css-output .file-path::before 
+        {
+            border-bottom: 1px dotted #fff;
+            position: absolute;
+            left: 0;
+            bottom: -3px;
+            right: 0;
+            content: ""; 
+        }
+    .css-output .file 
+    {
+        cursor: pointer; 
+    }
+    .css-output input[type='text'] 
+    {
+        position: absolute;
+        border: 1px solid #ccc;
+        background: #fff;
+        color: #333;
+        font: normal 12px/1 monospace;
+        padding: 3px;
+        outline: none; 
+    }
+    
+.toolbar 
+{
+    overflow: hidden;
+    padding: 5px 6px 0;
+    position: relative;
+    z-index: 1;
+    border-style: solid;
+    border-width: 1px 0;
+    border-color: {xen:property mutedTextColor} {xen:property faintTextColor} {xen:property dimmedTextColor};
+    color: {xen:property dimmedTextColor};
+    background: -webkit-linear-gradient(top, {xen:property pageBackground}, {xen:property mutedTextColor});
+    background: -moz-linear-gradient(top, {xen:property pageBackground}, {xen:property mutedTextColor});
+    background: -ms-linear-gradient(top, {xen:property pageBackground}, {xen:property mutedTextColor});
+    background: -o-linear-gradient(top, {xen:property pageBackground}, {xen:property mutedTextColor});
+    background: linear-gradient(top, {xen:property pageBackground}, {xen:property mutedTextColor}); 
+}
+    .toolbar.top 
+    {
+        border-radius: 5px 5px 0 0; 
+    }
+    .toolbar [role=button] 
+    {
+        float: left;
+        margin: 0 5px 5px 0;
+        border: 1px solid #888;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 4px 10px 4px 26px;
+        position: relative;
+        background: -webkit-linear-gradient(top, #fefefe, #b8b8b8);
+        background: -moz-linear-gradient(top, #fefefe, #b8b8b8);
+        background: -ms-linear-gradient(top, #fefefe, #b8b8b8);
+        background: -o-linear-gradient(top, #fefefe, #b8b8b8);
+        background: linear-gradient(top, #fefefe, #b8b8b8); 
+    }
+        .toolbar [role=button]::before 
+        {
+            content: '';
+            width: 16px;
+            height: 17px;
+            position: absolute;
+            top: 4px;
+            left: 5px;
+            background: url("styles/spritecow/sprites1.png") no-repeat; 
+        }
+        .toolbar [role=button].active 
+        {
+            background: #707070;
+            box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.6);
+            color: #fff; 
+        }
+        .toolbar [role=button].no-label 
+        {
+            width: 26px;
+            padding: 4px 0;
+            text-indent: -5000px; 
+        }
+        .toolbar [role=button].select-sprite::before 
+        {
+            background-position: -4px -2px; 
+        }
+        .toolbar [role=button].select-bg::before 
+        {
+            background-position: -50px -3px; 
+        }
+        .toolbar [role=button].open-img::before 
+        {
+            background-position: -26px -2px; 
+        }
+        .toolbar [role=button].invert-bg::before 
+        {
+            background-position: -99px -2px; 
+        }
+        .toolbar [role=button].reload-img::before 
+        {
+            background-position: -75px -2px; 
+        }
+        .toolbar [role=button].percent::before 
+        {
+            background-position: -121px -2px; 
+        }
+        .toolbar [role=button].bg-size::before 
+        {
+            background-position: -141px -1px; 
+        }
+		.toolbar [role=button].add-smiley::before 
+        {
+            background: url('styles/spritecow/smilie.png') no-repeat;
+			width: 18px;
+			height: 18px;
+        }
+    .toolbar .feedback 
+    {
+        float: left;
+        padding: 5px;
+        color: #555;
+        opacity: 0; 
+    }
+    .toolbar-group [role=button] 
+    {
+        margin-right: 0;
+        border-radius: 0;
+        border-left-width: 0; 
+    }
+        .toolbar-group [role=button]:first-child 
+        {
+            border-left-width: 1px;
+            border-radius: 4px 0 0 4px; 
+        }
+        .toolbar-group [role=button]:last-child 
+        {
+            margin-right: 5px;
+            border-radius: 0 4px 4px 0; 
+        }
+
+.feature-test 
+{
+    display: none;
+    width: 800px;
+    margin: 0 auto;
+    text-align: center; 
+}
+    .not-supported .feature-test 
+    {
+        display: block; 
+    }
+
+    .feature-test h1 
+    {
+        font: normal 2.5em sans-serif;
+        margin: 0;
+        padding: 40px 0; 
+    }
+
+    .feature-test ul 
+    {
+        display: inline-block;
+        *display: inline;
+        zoom: 1; 
+    }
+
+        .feature-test li 
+        {
+            margin: 10px auto;
+            font-size: 1.1em;
+            overflow: hidden;
+            text-align: left; 
+        }
+
+    .feature-test p 
+    {
+        width: 600px;
+        margin: 0 auto 20px;
+        font-size: 1.1em;
+        text-align: left; 
+    }
+
+.feature-test .pass, .feature-test .fail 
+{
+    float: left;
+    width: 50px;
+    font-weight: bold;
+    color: #5f5; 
+}
+
+    .feature-test .fail 
+    {
+        color: #f55; 
+    }]]></template>
+  </admin_templates>
+  <admin_template_modifications>
+    <modification template="smilie_import" modification_key="SmileyManager_smilie_import_sprite" description="Add import from sprite mode and categories choosers" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[</xen:radiounit>]]></find>
+      <replace><![CDATA[<xen:option label="{xen:phrase SmileyManager_import_from_sprite_image}" value="sprite_image">
+	<xen:textbox name="sprite_image" placeholder="styles/default/xenforo/smilies-sprite.png" />
+	<xen:hint>{xen:phrase SmileyManager_smilie_pre_import_sprite_image_explain}</xen:hint>
+</xen:option>
+
+$0
+
+<xen:include template="SmileyManager_import_choose_category" />]]></replace>
+    </modification>
+    <modification template="smilie_list" modification_key="SmileyManager_smilie_list_script" description="#BatchUpdateSmilies" execution_order="15" enabled="1" action="str_replace">
+      <find><![CDATA[$('#ExportSmilies').click(function(e)]]></find>
+      <replace><![CDATA[$('#BatchUpdateSmilies').click(function(e)
+{
+	var $exportForm = $('#ExportForm');
+	$exportForm.attr('action', '{xen:adminlink smilies/batch-update}');
+	$exportForm.find('input[type="submit"]').val('{xen:jsescape {xen:phrase SmileyManager_update_selected_smilies}}');
+	//$('#ExportSmilies').trigger('click');
+	$('label.selectListItem, #ExportForm, #ExportHint').toggle();	
+	$('.listItem .toggler, .listItem .delete, .togglerAll').toggle();
+		
+	return false;
+});
+
+$0]]></replace>
+    </modification>
+    <modification template="smilie_list" modification_key="SmileyManager_smilie_list_script2" description="#ExportSmilies" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[$('label.selectListItem, #ExportForm, #ExportHint').toggle();]]></find>
+      <replace><![CDATA[var $exportForm = $('#ExportForm');
+$exportForm.attr('action', '{xen:adminlink smilies/export}');
+$exportForm.find('input[type="submit"]').val('{xen:jsescape {xen:phrase export_selected_smilies}}');
+
+$0]]></replace>
+    </modification>
+    <modification template="smilie_list" modification_key="SmileyManager_smilie_list_topctrl" description="Insert top control buttons" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[</xen:topctrl>]]></find>
+      <replace><![CDATA[<a href="javascript:" class="button JsOnly" id="BatchUpdateSmilies">{xen:phrase SmileyManager_batch_update_smilies}</a>
+
+$0]]></replace>
+    </modification>
+  </admin_template_modifications>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="editor_setup" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="editorSetup" active="1" hint="" description=""/>
+    <listener event_id="init_dependencies" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="initDependencies" active="1" hint="" description=""/>
+    <listener event_id="load_class_bb_code" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="loadBbCodeBase" active="1" hint="XenForo_BbCode_Formatter_Base" description=""/>
+    <listener event_id="load_class_controller" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="loadSmilieControllerAdmin" active="1" hint="XenForo_ControllerAdmin_Smilie" description=""/>
+    <listener event_id="load_class_controller" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="loadAccountController" active="1" hint="XenForo_ControllerPublic_Account" description=""/>
+    <listener event_id="load_class_datawriter" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="loadUserDataWriter" active="1" hint="XenForo_DataWriter_User" description=""/>
+    <listener event_id="template_create" execute_order="10" callback_class="Milano_SmileyManager_Listener" callback_method="templateEditorCreate" active="1" hint="editor" description=""/>
+  </code_event_listeners>
+  <cron/>
+  <email_templates/>
+  <email_template_modifications/>
+  <optiongroups>
+    <option option_id="SmileyManager_quickloadSmiley" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>0</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="messageOptions" display_order="1015"/>
+    </option>
+  </optiongroups>
+  <permissions>
+    <permission_groups/>
+    <permissions/>
+    <interface_groups/>
+  </permissions>
+  <phrases>
+    <phrase title="option_SmileyManager_quickloadSmiley" version_id="31" version_string="1.1.2"><![CDATA[Enabled Quickload Smiley mode]]></phrase>
+    <phrase title="option_SmileyManager_quickloadSmiley_explain" version_id="15" version_string="1.0.2"><![CDATA[If selected, all smilies will be loaded by clicking the textarea of the editor.]]></phrase>
+    <phrase title="SmileyManager_add_more_smilies" version_id="4" version_string="1.0.0"><![CDATA[Add More Smilies]]></phrase>
+    <phrase title="SmileyManager_add_selected" version_id="5" version_string="1.0.0"><![CDATA[Add Selected]]></phrase>
+    <phrase title="SmileyManager_add_smiley" version_id="23" version_string="1.1.0"><![CDATA[Add Smiley]]></phrase>
+    <phrase title="SmileyManager_background_set_to_x" version_id="23" version_string="1.1.0"><![CDATA[Background set to {color}]]></phrase>
+    <phrase title="SmileyManager_batch_update_smilies" version_id="4" version_string="1.0.0"><![CDATA[Batch Update Smilies]]></phrase>
+    <phrase title="SmileyManager_enable_quickload_smiley_mode" version_id="15" version_string="1.0.2"><![CDATA[Enable Quickload Smiley mode]]></phrase>
+    <phrase title="SmileyManager_import_from_sprite_image" version_id="31" version_string="1.1.2"><![CDATA[Import from sprite image]]></phrase>
+    <phrase title="SmileyManager_import_to_category" version_id="12" version_string="1.0.1"><![CDATA[Import To Category]]></phrase>
+    <phrase title="SmileyManager_incorrect_background" version_id="23" version_string="1.1.0"><![CDATA[Incorrect background colour set?]]></phrase>
+    <phrase title="SmileyManager_pick_background" version_id="23" version_string="1.1.0"><![CDATA[Pick Background]]></phrase>
+    <phrase title="SmileyManager_reload_current_image" version_id="23" version_string="1.1.0"><![CDATA[Reload Current Image]]></phrase>
+    <phrase title="SmileyManager_select_category" version_id="31" version_string="1.1.2"><![CDATA[Select Category]]></phrase>
+    <phrase title="SmileyManager_select_sprite" version_id="23" version_string="1.1.0"><![CDATA[Select Sprite]]></phrase>
+    <phrase title="SmileyManager_select_sprite_first" version_id="23" version_string="1.1.0"><![CDATA[Please select sprite first]]></phrase>
+    <phrase title="SmileyManager_smilie_pre_import_sprite_image_explain" version_id="31" version_string="1.1.2"><![CDATA[Use this option to browse smilie sprite image and then manually enter configuration data for each smilie to be imported. Ensure that the smilie sprite image is uploaded before proceeding with this step.]]></phrase>
+    <phrase title="SmileyManager_sprite_image" version_id="19" version_string="1.0.3"><![CDATA[Sprite Image]]></phrase>
+    <phrase title="SmileyManager_sprite_not_found" version_id="20" version_string="1.0.3"><![CDATA[The requested sprite image could not be found.]]></phrase>
+    <phrase title="SmileyManager_toggle_dark_background" version_id="23" version_string="1.1.0"><![CDATA[Toggle Dark Background]]></phrase>
+    <phrase title="SmileyManager_update_selected_smilies" version_id="31" version_string="1.1.2"><![CDATA[Update Selected Smilies]]></phrase>
+    <phrase title="SmileyManager_update_smilies" version_id="4" version_string="1.0.0"><![CDATA[Update Smilies]]></phrase>
+    <phrase title="SmileyManager_upgrade_browser" version_id="25" version_string="1.1.0"><![CDATA[It's not you, I just can't get along with your browser.
+Maybe if things change in the future... maybe if you bring
+<a href="http://www.google.com/chrome/">Chrome</a>,
+<a href="http://www.mozilla.com/en-US/firefox/new/">Firefox</a>,
+<a href="http://www.opera.com/">Opera</a> or even
+<a href="http://ie.microsoft.com/testdrive/Info/Downloads/Default.html">IE10</a>
+to the party... not promising anything, but give me a call.]]></phrase>
+  </phrases>
+  <route_prefixes/>
+  <style_properties/>
+  <templates>
+    <template title="SmileyManager_account_preferences" version_id="15" version_string="1.0.2"><![CDATA[<xen:if is="{$xenOptions.SmileyManager_quickloadSmiley}"><li>
+	<label for="ctrl_quickload_smiley"><input type="checkbox" name="quickload_smiley" value="1" id="ctrl_quickload_smiley" {xen:checked "{$visitor.quickload_smiley}"} />
+	{xen:phrase SmileyManager_enable_quickload_smiley_mode}</label>
+	<p class="hint">{xen:phrase option_SmileyManager_quickloadSmiley_explain}</p>
+</li></xen:if>]]></template>
+  </templates>
+  <public_template_modifications>
+    <modification template="account_preferences" modification_key="SmileyManager_account_preferences_quickload" description="Add Quickload Smiley option" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[{xen:phrase use_rich_text_editor_to_create_and_edit_messages}</label></li>]]></find>
+      <replace><![CDATA[$0
+<xen:include template="SmileyManager_account_preferences" />]]></replace>
+    </modification>
+    <modification template="message_simple" modification_key="SmileyManager_message_simple_parse_smilies" description="Parse smilies in profile posts" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[{xen:helper bodyText, $message.message}]]></find>
+      <replace><![CDATA[{xen:helper parseSmilies, $0}]]></replace>
+    </modification>
+    <modification template="profile_post_comment" modification_key="SmileyManager_profile_post_comment_parse_smilies" description="Parse smilies in profile post comments" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[{xen:helper bodytext, $comment.message}]]></find>
+      <replace><![CDATA[{xen:helper parseSmilies, $0}]]></replace>
+    </modification>
+    <modification template="profile_post_list_item_simple" modification_key="SmileyManager_profile_post_list_item_simple_parse_" description="Parse smilies in profile posts sidebar block" execution_order="10" enabled="0" action="str_replace">
+      <find><![CDATA[{xen:helper bodyText, $profilePost.message}]]></find>
+      <replace><![CDATA[{xen:helper parseSmilies, $0}]]></replace>
+    </modification>
+  </public_template_modifications>
+  <bb_code_media_sites/>
+  <bb_codes/>
+</addon>

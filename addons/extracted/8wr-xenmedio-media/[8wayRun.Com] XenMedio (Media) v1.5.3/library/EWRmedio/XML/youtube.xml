@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <service_type>json</service_type>
+  <service_media>video</service_media>
+  <service_name>YouTube</service_name>
+  <service_slug>youtube</service_slug>
+  <service_url><![CDATA[http://www.youtube.com/watch?v={serviceVAL}]]></service_url>
+  <service_feed><![CDATA[http://gdata.youtube.com/feeds/api/videos/{serviceVAL}?v=2&alt=json]]></service_feed>
+  <service_regex><![CDATA[http://[\w\.]*?youtube\.[a-z]+/watch\?.*?v=(?P<sval1>[\w-]+)
+http://[\w\.]*?youtube\.[a-z]+/v/(?P<sval1>[\w-]+)
+http://youtu\.be/(?P<sval1>[\w-]+)]]></service_regex>
+  <service_movie><![CDATA[null]]></service_movie>
+  <service_value2><![CDATA[null; $json = $json['entry']['media$group']]]></service_value2>
+  <service_thumb><![CDATA[$json['media$thumbnail']['1']['url']]]></service_thumb>
+  <service_title><![CDATA[$json['media$title']['$t']]]></service_title>
+  <service_description><![CDATA[$json['media$description']['$t']]]></service_description>
+  <service_duration><![CDATA[$json['yt$duration']['seconds']]]></service_duration>
+  <service_keywords><![CDATA[!empty($json['media$keywords']) ? $json['media$keywords']['$t'] : null]]></service_keywords>
+  <service_errors><![CDATA[null;$e=!empty($json['entry']['app$control']['yt$state'])?$json['entry']['app$control']['yt$state']:null;empty($json['entry']['media$group']['media$thumbnail'])||(!empty($e)&&$e['name']!='restricted'&&$e['name']!='processing')?$e['$t']:null]]></service_errors>
+  <service_parameters><![CDATA[<iframe id="ytplayer" type="text/html" width="{w}" height="{h}" src="http://www.youtube.com/embed/{serviceVAL}?autoplay={ap10}&fs=1&rel=0&enablejsapi=1&domain={domain}" frameborder="0"></iframe>]]></service_parameters>
+  <service_width>640</service_width>
+  <service_height>390</service_height>
+</service>

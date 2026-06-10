@@ -1,0 +1,545 @@
+# XenForo Add-on Structure
+
+## Add-on IDs
+
+Each add-on has a unique ID that determines its filesystem location under `src/addons/`.
+
+### Simple ID
+
+A single word with no special characters:
+
+```
+Demo
+MyAddon
+```
+
+Rules:
+- Only `a-z`, `A-Z`
+- May contain `0-9` but **not** at the start
+- No slashes, dashes, or underscores
+
+Files go in: `src/addons/Demo/`
+
+### Vendor ID
+
+A vendor prefix followed by a slash and the add-on name:
+
+```
+SomeVendor/Demo
+MyCompany/Forum
+```
+
+Rules:
+- Only `a-z`, `A-Z` on both sides of the slash
+- Single `/` separator — not at start or end
+- May contain `0-9` but not at the start of either part
+
+Files go in: `src/addons/SomeVendor/Demo/`
+
+The add-on ID also becomes your **PHP namespace prefix**. `SomeVendor/Demo` maps to namespace `SomeVendor\Demo`.
+
+---
+
+## Version String Format
+
+Use semantic versioning: `MAJOR.MINOR.PATCH`
+
+- **MAJOR**: breaking changes
+- **MINOR**: new backwards-compatible features
+- **PATCH**: backwards-compatible bug fixes
+
+Examples: `1.0.0`, `2.3.1`, `1.0.0 Alpha`, `2.0.0 Beta 2`
+
+---
+
+## Version ID Format
+
+Version IDs are integers used for internal comparisons. The recommended format is `aabbccde`:
+
+| Part | Meaning |
+|------|---------|
+| `aa` | Major version |
+| `bb` | Minor version |
+| `cc` | Patch version |
+| `d`  | State: `1`=alpha, `3`=beta, `5`=RC, `7`=stable |
+| `e`  | State iteration |
+
+Examples:
+- `1.0.0 Alpha 1` → `1000011`
+- `1.0.0 Beta 3` → `1000033`
+- `1.0.0 RC 2` → `1000052`
+- `1.0.0` (stable) → `1000070`
+- `2.0.0` (stable) → `2000070`
+- `1.7.3 RC 4` → `1070354`
+
+---
+
+## Common Add-on Files and Directories
+
+```
+src/addons/Demo/
+├── addon.json          # Required: add-on metadata
+├── hashes.json         # Auto-generated: file integrity hashes
+├── Setup.php           # Optional: install/upgrade/uninstall logic
+├── build.json          # Optional: build process configuration
+├── _data/              # XML export files (used for installation)
+├── _output/            # Dev mode output (not included in releases)
+├── _no_upload/         # Files bundled in ZIP but not uploaded to server
+├── _stubs/             # Custom templates for xf-make:* commands
+├── _files/             # Assets for build (copied to web root paths)
+├── _build/             # Temporary build directory (auto-created)
+└── _releases/          # Output ZIP files from build-release command
+```
+
+---
+
+## addon.json
+
+The `addon.json` file is required and must be in the add-on's root directory.
+
+### Minimal example
+
+```json
+{
+    "title": "My Add-on",
+    "version_string": "1.0.0",
+    "version_id": 1000070,
+    "dev": "Your Name"
+}
+```
+
+### Full example
+
+```json
+{
+    "legacy_addon_id": "",
+    "title": "My Add-on by Some Company",
+    "description": "A description of what this add-on does.",
+    "version_id": 1000070,
+    "version_string": "1.0.0",
+    "dev": "Some Company",
+    "dev_url": "https://example.com",
+    "faq_url": "https://example.com/faq",
+    "support_url": "https://example.com/support",
+    "extra_urls": {
+        "Bug reports": "https://github.com/example/repo/issues",
+        "Changelog": "https://example.com/changelog"
+    },
+    "require": {
+        "XF": [2000010, "XenForo 2.0.0+"],
+        "php": ["7.2.0", "PHP 7.2.0+"],
+        "php-ext/json": ["*", "JSON extension"],
+        "SomeVendor/OtherAddon": [1000070, "Other Addon 1.0.0+"]
+    },
+    "icon": "fa-home",
+    "composer_autoload": "_vendor"
+}
+```
+
+### Property Reference
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| `title` | Yes | The add-on name shown in Admin CP |
+| `version_id` | Yes | Integer for internal version comparison. Must increase with every release. |
+| `version_string` | Yes | Human-readable version shown in Admin CP |
+| `dev` | Recommended | Developer/company name |
+| `description` | No | Short description shown in Admin CP |
+| `dev_url` | No | URL — makes developer name a hyperlink |
+| `faq_url` | No | FAQ link shown in Admin CP |
+| `support_url` | No | Support link shown in Admin CP |
+| `extra_urls` | No | Array of `"link text" => "URL"` for additional links |
+| `require` | No | Requirements map (see below) |
+| `icon` | No | Font Awesome icon name (`fa-home`) or path to image file |
+| `legacy_addon_id` | No | Old XF1 add-on ID for automatic upgrade handling |
+| `composer_autoload` | No | Path to Composer vendor directory relative to add-on root |
+
+### The `require` Property
+
+```json
+"require": {
+    "XF": [2000010, "XenForo 2.0.0+"],
+    "php": ["7.2.0", "PHP 7.2.0+"],
+    "php-ext/json": ["*", "JSON extension"],
+    "php-ext/gd": ["*", "GD extension"],
+    "SomeVendor/Addon": [1000070, "SomeVendor Addon 1.0.0+"]
+}
+```
+
+| Key format | Refers to |
+|------------|-----------|
+| `XF` | XenForo version ID |
+| `php` | PHP version string |
+| `php-ext/NAME` | PHP extension (e.g. `php-ext/json`) |
+| Any add-on ID | Another installed add-on's version ID |
+
+Use `"*"` as the version to require any version of the product.
+
+---
+
+## hashes.json
+
+Auto-generated by `xf-addon:build-release`. Contains SHA hashes of all add-on files for the file health check system. Never edit manually.
+
+---
+
+## Setup.php
+
+The Setup class handles install, upgrade, and uninstall logic.
+
+### Simple Setup (no steps)
+
+```php
+<?php
+
+namespace Demo;
+
+class Setup extends \XF\AddOn\AbstractSetup
+{
+    public function install(array $stepParams = [])
+    {
+        $this->schemaManager()->createTable('xf_demo', function(\XF\Db\Schema\Create $table) {
+            $table->addColumn('demo_id', 'int')->autoIncrement();
+            $table->addColumn('title', 'varchar', 100);
+            $table->addColumn('created_date', 'int')->setDefault(0);
+        });
+    }
+
+    public function upgrade(array $stepParams = [])
+    {
+        if ($this->addOn->version_id < 1010070) {
+            $this->schemaManager()->alterTable('xf_demo', function(\XF\Db\Schema\Alter $table) {
+                $table->addColumn('description', 'text')->nullable(true);
+            });
+        }
+    }
+
+    public function uninstall(array $stepParams = [])
+    {
+        $this->schemaManager()->dropTable('xf_demo');
+    }
+}
+```
+
+### Multi-step Setup (with StepRunner traits)
+
+```php
+<?php
+
+namespace Demo\Portal;
+
+use XF\AddOn\AbstractSetup;
+use XF\AddOn\StepRunnerInstallTrait;
+use XF\AddOn\StepRunnerUpgradeTrait;
+use XF\AddOn\StepRunnerUninstallTrait;
+use XF\Db\Schema\Alter;
+use XF\Db\Schema\Create;
+
+class Setup extends AbstractSetup
+{
+    use StepRunnerInstallTrait;
+    use StepRunnerUpgradeTrait;
+    use StepRunnerUninstallTrait;
+
+    // Install steps: installStep1(), installStep2(), etc.
+    public function installStep1()
+    {
+        $this->schemaManager()->alterTable('xf_forum', function(Alter $table) {
+            $table->addColumn('demo_portal_auto_feature', 'tinyint')->setDefault(0);
+        });
+    }
+
+    public function installStep2()
+    {
+        $this->schemaManager()->alterTable('xf_thread', function(Alter $table) {
+            $table->addColumn('demo_portal_featured', 'tinyint')->setDefault(0);
+        });
+    }
+
+    public function installStep3()
+    {
+        $this->schemaManager()->createTable('xf_demo_portal_featured_thread', function(Create $table) {
+            $table->addColumn('thread_id', 'int');
+            $table->addColumn('featured_date', 'int');
+            $table->addPrimaryKey('thread_id');
+        });
+    }
+
+    // Upgrade steps: upgrade{versionId}Step1(), upgrade{versionId}Step2(), etc.
+    public function upgrade1010070Step1()
+    {
+        $this->schemaManager()->alterTable('xf_demo_portal_featured_thread', function(Alter $table) {
+            $table->addColumn('feature_user_id', 'int')->setDefault(0);
+        });
+    }
+
+    // Uninstall steps: uninstallStep1(), uninstallStep2(), etc.
+    public function uninstallStep1()
+    {
+        $this->schemaManager()->alterTable('xf_forum', function(Alter $table) {
+            $table->dropColumns('demo_portal_auto_feature');
+        });
+    }
+
+    public function uninstallStep2()
+    {
+        $this->schemaManager()->alterTable('xf_thread', function(Alter $table) {
+            $table->dropColumns('demo_portal_featured');
+        });
+    }
+
+    public function uninstallStep3()
+    {
+        $this->schemaManager()->dropTable('xf_demo_portal_featured_thread');
+    }
+}
+```
+
+### Creating Widgets in Setup
+
+```php
+public function installStep4()
+{
+    $this->createWidget('demo_portal_members_online', 'members_online', [
+        'positions' => ['demo_portal_sidebar' => 10]
+    ]);
+}
+```
+
+---
+
+## build.json
+
+Controls the release build process:
+
+```json
+{
+    "additional_files": [
+        "js/demo/portal",
+        "styles/demo/portal"
+    ],
+    "minify": [
+        "js/demo/portal/main.js",
+        "js/demo/portal/utils.js"
+    ],
+    "rollup": {
+        "js/demo/portal/bundle.js": [
+            "js/demo/portal/main.min.js",
+            "js/demo/portal/utils.min.js"
+        ]
+    },
+    "exec": [
+        "echo 'Building {title} v{version_string}'"
+    ]
+}
+```
+
+| Key | Description |
+|-----|-------------|
+| `additional_files` | Paths relative to XF root to copy into the build. Checks `_files/` directory first. |
+| `minify` | JS files to minify. `"*"` minifies everything in the `js/` directory. |
+| `rollup` | Combine multiple JS files into one. Key is output path, value is array of inputs. |
+| `exec` | Shell commands to run before packaging. Supports `{title}`, `{version_string}`, `{version_id}` placeholders. |
+
+---
+
+## CLI Commands Reference
+
+### xf-addon:* Commands
+
+```bash
+# Create a new add-on interactively
+php cmd.php xf-addon:create
+
+# Export _data XML files from database
+php cmd.php xf-addon:export [addon_id]
+
+# Build a release ZIP
+php cmd.php xf-addon:build-release [addon_id]
+
+# Bump version number
+php cmd.php xf-addon:bump-version [addon_id] --version-id 1020370 --version-string 1.2.3
+
+# Sync addon.json changes to database without rebuilding
+php cmd.php xf-addon:sync-json [addon_id]
+
+# Validate addon.json format and contents
+php cmd.php xf-addon:validate-json [addon_id]
+
+# Run a specific install step
+php cmd.php xf-addon:install-step [addon_id] [step_number]
+
+# Run a specific upgrade step
+php cmd.php xf-addon:upgrade-step [addon_id] [version_id] [step_number]
+
+# Run a specific uninstall step
+php cmd.php xf-addon:uninstall-step [addon_id] [step_number]
+```
+
+### xf-dev:* Commands (requires development mode)
+
+```bash
+# Import _output files into database
+php cmd.php xf-dev:import --addon [addon_id]
+
+# Export database data to _output files
+php cmd.php xf-dev:export --addon [addon_id]
+```
+
+### xf-make:* Commands
+
+```bash
+# Generate boilerplate for a new entity
+php cmd.php xf-make:entity [addon_id] [entity_short_name]
+
+# Generate boilerplate for a new controller
+php cmd.php xf-make:controller [addon_id] [controller_name]
+
+# Generate boilerplate for a new service
+php cmd.php xf-make:service [addon_id] [service_name]
+
+# Generate boilerplate for a new repository
+php cmd.php xf-make:repository [addon_id] [repo_name]
+
+# Generate boilerplate for a new finder
+php cmd.php xf-make:finder [addon_id] [finder_name]
+
+# Publish core stubs for customization
+php cmd.php xf-make:stub-publish entity --addon [addon_id]
+```
+
+### General xf:* Commands
+
+```bash
+# Install XenForo
+php cmd.php xf:install
+
+# File health check
+php cmd.php xf:file-check [addon_id]
+
+# Install add-on
+php cmd.php xf:addon-install [addon_id]
+
+# Upgrade add-on
+php cmd.php xf:addon-upgrade [addon_id]
+
+# Rebuild add-on data
+php cmd.php xf:addon-rebuild [addon_id]
+
+# Uninstall add-on
+php cmd.php xf:addon-uninstall [addon_id]
+```
+
+---
+
+## _output Directory Structure
+
+When development mode is enabled, XenForo writes all data to the `_output/` directory:
+
+```
+src/addons/Demo/_output/
+├── class_extensions/
+│   └── XF-Pub-Controller-Member_Demo-XF-Pub-Controller-Member.json
+├── code_event_listeners/
+│   └── entity_structure_[hash].json
+├── content_type_fields/
+│   └── demo_item-attachment_handler_class.json
+├── templates/
+│   ├── public/
+│   │   └── demo_example.html
+│   ├── admin/
+│   │   └── demo_admin_page.html
+│   └── email/
+│       └── demo_notification.html
+├── phrases/
+│   └── demo_phrase_name.txt
+├── options/
+│   └── demoMyOption.json
+├── option_groups/
+│   └── demoOptions.json
+├── permissions/
+│   └── forum-demoFeature.json
+├── permission_groups/
+│   └── demo.json
+├── admin_navigation/
+│   └── demo.json
+├── routes/
+│   ├── public/
+│   │   └── demo.json
+│   └── admin/
+│       └── demo.json
+└── extension_hint.php   # IDE type hinting for XFCP_ classes
+```
+
+---
+
+## Autoloader and Namespaces
+
+XenForo uses Composer's autoloader. The autoload root is `src/addons/`.
+
+Class naming follows a strict "one class per file" pattern:
+
+| Class name | File path |
+|------------|-----------|
+| `Demo\Setup` | `src/addons/Demo/Setup.php` |
+| `Demo\Entity\Thing` | `src/addons/Demo/Entity/Thing.php` |
+| `Demo\Repository\Thing` | `src/addons/Demo/Repository/Thing.php` |
+| `Demo\Pub\Controller\Portal` | `src/addons/Demo/Pub/Controller/Portal.php` |
+| `SomeVendor\Demo\Entity\Item` | `src/addons/SomeVendor/Demo/Entity/Item.php` |
+
+### Short Class Names
+
+XenForo uses short class names with context-sensitive resolution:
+
+```php
+// Entity — resolves to Demo\Entity\Thing
+\XF::em()->create('Demo:Thing');
+
+// Repository — resolves to Demo\Repository\Thing
+\XF::repository('Demo:Thing');
+
+// Finder — resolves to Demo\Finder\Thing (if exists) + Demo\Entity\Thing table
+\XF::finder('Demo:Thing');
+
+// Service — resolves to Demo\Service\Thing\Creator
+\XF::service('Demo:Thing\Creator', $arg1, $arg2);
+
+// Criteria — resolves to Demo\Criteria\Post
+\XF::app()->criteria('Demo:Post', $savedCriteria);
+```
+
+---
+
+## Extending Classes (XFCP)
+
+XenForo uses the "XenForo Class Proxy" (XFCP) system to allow multiple add-ons to extend the same class:
+
+```php
+// src/addons/Demo/XF/Pub/Controller/Member.php
+<?php
+
+namespace Demo\XF\Pub\Controller;
+
+class Member extends XFCP_Member
+{
+    public function actionIndex()
+    {
+        $reply = parent::actionIndex();
+
+        if ($reply instanceof \XF\Mvc\Reply\View) {
+            $reply->setParam('myNewVar', 'some value');
+        }
+
+        return $reply;
+    }
+}
+```
+
+Register it via Admin CP > Development > Class Extensions:
+- Base class: `XF\Pub\Controller\Member`
+- Extension class: `Demo\XF\Pub\Controller\Member`
+
+The convention for extended class paths mirrors the original class path under `XF/`:
+- Extending `XF\Pub\Controller\Member` → place at `src/addons/Demo/XF/Pub/Controller/Member.php`
+- Extending `XF\Entity\Thread` → place at `src/addons/Demo/XF/Entity/Thread.php`
+- Extending `XF\Service\Thread\Creator` → place at `src/addons/Demo/XF/Service/Thread/Creator.php`

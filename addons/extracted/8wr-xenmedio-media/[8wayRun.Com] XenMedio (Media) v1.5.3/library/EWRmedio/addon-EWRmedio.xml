@@ -1,0 +1,3362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="EWRmedio" title="[8wayRun.Com] XenMedio (Media)" version_string="1.5.3" version_id="53" url="http://xenforo.com/community/resources/97/" install_callback_class="EWRmedio_Install" install_callback_method="installCode" uninstall_callback_class="EWRmedio_Install" uninstall_callback_method="uninstallCode">
+  <admin_navigation/>
+  <admin_permissions/>
+  <admin_style_properties/>
+  <admin_templates>
+    <template title="option_list_option_multi_EWRmedio"><![CDATA[<xen:selectunit label="{$preparedOption.title}" name="{$fieldPrefix}[{$preparedOption.option_id}]" value="{xen:raw $preparedOption.option_value}"
+hint="{$preparedOption.hint}" size="10" multiple="true">
+	<xen:options source="$formatParams" />
+	<xen:explain>{xen:raw $preparedOption.explain}</xen:explain>
+	<xen:html>
+		<input type="hidden" name="{$listedFieldName}" value="{$preparedOption.option_id}" />
+		{xen:raw $editLink}
+	</xen:html>
+</xen:selectunit>]]></template>
+  </admin_templates>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="init_dependencies" execute_order="10" callback_class="EWRmedio_Listener_Init" callback_method="listen" active="1" description="Denormalization"/>
+    <listener event_id="load_class_bb_code" execute_order="10" callback_class="EWRmedio_Listener_BbCode" callback_method="formatter" active="1" description="BBCode"/>
+    <listener event_id="load_class_controller" execute_order="10" callback_class="EWRmedio_Listener_Controller" callback_method="controller" active="1" description="Controller"/>
+    <listener event_id="navigation_tabs" execute_order="98" callback_class="EWRmedio_Listener_NavTabs" callback_method="listen" active="1" description="Navigation Tabs"/>
+    <listener event_id="template_hook" execute_order="10" callback_class="EWRmedio_Listener_Template" callback_method="template_hook" active="1" description="Template Hooks"/>
+  </code_event_listeners>
+  <cron>
+    <entry entry_id="EWRmedio_cleanUpDaily" cron_class="EWRmedio_CronEntry_CleanUp" cron_method="runDailyCleanUp" active="1"><![CDATA[{"day_type":"dom","dom":["-1"],"hours":["4"],"minutes":["0"]}]]></entry>
+  </cron>
+  <email_templates>
+    <template title="watched_media_reply">
+      <subject><![CDATA[{xen:phrase reply_to_watched_media_x, "title={$media.media_title}"}]]></subject>
+      <body_text><![CDATA[{xen:phrase watched_media_reply_email_text, 
+	"receiver_username={$receiver.username}",
+	"username={$reply.username}",
+	"title={$media.media_title}",
+	"view_link={xen:link 'canonical:media', $media}",
+	"message={$reply.messageText}",
+	"manage_link={xen:link 'canonical:watched/media/all'}",
+	"watch_link={xen:link 'canonical:media/watch-confirm', $media}",
+	"board_link={xen:link 'canonical:index'}",
+	"board_title={$xenOptions.boardTitle}"
+}]]></body_text>
+      <body_html><![CDATA[<p style="margin-top: 0">{xen:phrase watched_media_reply_email_html,
+	'receiver={$receiver.username}',
+	'replier=<a href="{xen:link canonical:members, $reply}" style="color: #176093; text-decoration: none">{$reply.username}</a>',
+	'board=<a href="{xen:link canonical:index}" style="color: #176093; text-decoration: none">{$xenOptions.boardTitle}</a>'}</p>
+
+<h2 style="font-size: 18pt; font-weight: normal; margin: 10px 0"><a href="{xen:link canonical:media, $media}" style="color: #141414; text-decoration: none">{$media.media_title}<br />
+	<span style="color: #176093; font-size: 10px">{xen:link canonical:media, $media}</span></a></h2>
+
+<table cellpadding="10" cellspacing="0" border="0" width="100%" style="margin: 20px 0; background-color: #f0f7fc; border-top: 1px solid #d7edfc">
+<tr>
+	<td>
+		<a href="{xen:link canonical:media, $media}" style="
+			display: block;
+			float: left;
+			padding: 5px 10px;
+			background-color: #65a5d1;
+			border: none;
+			border-radius: 3px;
+			font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
+			font-size: 11px;
+			color: white;
+			text-decoration: none">{xen:phrase view_this_media}</a>
+	</td>
+	<td align="right">
+		<a href="{xen:link canonical:watched/media}" style="
+			display: block;
+			padding: 5px 0;
+			font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
+			font-size: 11px;
+			color: #176093;
+			text-decoration: none">{xen:phrase unread_watched_media}</a>
+	</td>
+</tr>
+</table>
+
+<p style="font-size: 11px; color: #969696">{xen:phrase watched_media_email_html_footer_1,
+	'media=<a href="{xen:link canonical:media, $media}" style="color: #969696">{$media.media_title}</a>',
+	'board=<a href="{xen:link canonical:index}" style="color: #969696">{$xenOptions.boardTitle}</a>'}</p>
+
+<p style="font-size: 11px; color: #969696">{xen:phrase watched_media_email_html_footer_2,
+	'watch_link={xen:link canonical:media/watch-confirm, $media}',
+	'manage_link={xen:link canonical:watched/media/all}',
+	'link_style=color: #969696'}</p>]]></body_html>
+    </template>
+    <template title="watched_media_reply_messagetext">
+      <subject><![CDATA[{xen:phrase reply_to_watched_media_x, "title={$media.media_title}"}]]></subject>
+      <body_text><![CDATA[{xen:phrase watched_media_reply_messagetext_email_text, 
+	"receiver_username={$receiver.username}",
+	"username={$reply.username}",
+	"title={$media.media_title}",
+	"message={$reply.messageText}",
+	"view_link={xen:link 'canonical:media', $media}",
+	"manage_link={xen:link 'canonical:watched/threads/all'}",
+	"watch_link={xen:link 'canonical:threads/watch-confirm', $thread}",
+	"board_link={xen:link 'canonical:index'}",
+	"board_title={$xenOptions.boardTitle}"
+}]]></body_text>
+      <body_html><![CDATA[<p style="margin-top: 0">{xen:phrase watched_media_reply_email_html,
+	'receiver={$receiver.username}',
+	'replier=<a href="{xen:link canonical:members, $reply}" style="color: #176093; text-decoration: none">{$reply.username}</a>',
+	'board=<a href="{xen:link canonical:index}" style="color: #176093; text-decoration: none">{$xenOptions.boardTitle}</a>'}</p>
+
+<h2 style="font-size: 18pt; font-weight: normal; margin: 10px 0"><a href="{xen:link canonical:media, $media}" style="color: #141414; text-decoration: none">{$media.media_title}<br />
+	<span style="color: #176093; font-size: 10px">{xen:link canonical:media, $media}</span></a></h2>
+
+<hr style="height: 1px; margin: 10px 0; border: 0; color: #D7EDFC; background-color: #D7EDFC" />
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 10px 0 20px">
+<tr valign="top">
+	<td style="font-size: 13px; line-height: 1.231; padding-right: 20px">
+		<div style="
+			background-color: #D7EDFC;
+			border: 1px solid #D7EDFC;
+			border-radius: 5px">
+			<table cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<td style="
+					background-color: #F0F7FC;
+					padding: 5px;
+					border-radius: 4px">
+					<a href="{xen:link canonical:members, $reply}" title="{$reply.username}"
+						><img src="{xen:helper avatar, $reply, s}" alt="{$reply.username}" title="{$reply.username}" style="
+							width: 48px;
+							height: 48px;
+							background-color: #FCFCFF;
+							border: 1px solid #A5CAE4;
+							padding: 2px;
+							border-radius: 4px"
+						/></a>
+					</td>
+				</tr>
+			</table>
+			<span style="
+				padding: 3px 5px;
+				display: block"><!--{$reply.username}-->&nbsp;</span>
+		</div>
+	</td>
+	<td width="90%" style="font-family: Georgia, 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4">
+		{xen:raw $reply.messageHtml}
+	</td>	
+</tr>
+</table>
+
+<table cellpadding="10" cellspacing="0" border="0" width="100%" style="margin: 20px 0; background-color: #f0f7fc; border-top: 1px solid #d7edfc">
+<tr>
+	<td>
+		<a href="{xen:link canonical:media, $media}" style="
+			display: block;
+			float: left;
+			padding: 5px 10px;
+			background-color: #65a5d1;
+			border: none;
+			border-radius: 3px;
+			font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
+			font-size: 11px;
+			color: white;
+			text-decoration: none">{xen:phrase view_this_thread}</a>
+	</td>
+	<td align="right">
+		<a href="{xen:link canonical:watched/media}" style="
+			display: block;
+			padding: 5px 0;
+			font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
+			font-size: 11px;
+			color: #176093;
+			text-decoration: none">{xen:phrase unread_media_threads}</a>
+	</td>
+</tr>
+</table>
+
+<p style="font-size: 11px; color: #969696">{xen:phrase watched_media_email_html_footer_1,
+	'media=<a href="{xen:link canonical:media, $media}" style="color: #969696">{$media.media_title}</a>',
+	'board=<a href="{xen:link canonical:index}" style="color: #969696">{$xenOptions.boardTitle}</a>'}</p>
+
+<p style="font-size: 11px; color: #969696">{xen:phrase watched_media_email_html_footer_2,
+	'watch_link={xen:link canonical:media/watch-confirm, $media}',
+	'manage_link={xen:link canonical:watched/media/all}',
+	'link_style=color: #969696'}</p>]]></body_html>
+    </template>
+  </email_templates>
+  <optiongroups>
+    <group group_id="EWRmedio" display_order="10000" debug_only="0"/>
+    <option option_id="EWRmedio_animatedcloud" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>1</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="504"/>
+    </option>
+    <option option_id="EWRmedio_autocheck" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>0</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="2"/>
+    </option>
+    <option option_id="EWRmedio_autoforum" edit_format="callback" data_type="array" can_backup="1">
+      <default_value>a:1:{i:0;s:1:"0";}</default_value>
+      <edit_format_params>EWRmedio_Option_ForumChooser::renderOption</edit_format_params>
+      <sub_options>*</sub_options>
+      <relation group_id="EWRmedio" display_order="1"/>
+    </option>
+    <option option_id="EWRmedio_autolock" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>0</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="3"/>
+    </option>
+    <option option_id="EWRmedio_autoplay" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>1</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="301"/>
+    </option>
+    <option option_id="EWRmedio_cloudcount" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>50</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="501"/>
+    </option>
+    <option option_id="EWRmedio_commentcount" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>5</default_value>
+      <edit_format_params>step=5</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="302"/>
+    </option>
+    <option option_id="EWRmedio_custom1_name" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1101"/>
+    </option>
+    <option option_id="EWRmedio_custom1_params" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>rows=2
+inputclass=Elastic</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1103"/>
+    </option>
+    <option option_id="EWRmedio_custom1_type" edit_format="select" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>textbox=Text Box
+spinbox=Spin Box
+onoff=On/Off Check Box
+radio=Radio Buttons
+select=Select Menu
+checkbox=Check Boxes</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1102"/>
+    </option>
+    <option option_id="EWRmedio_custom2_name" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1201"/>
+    </option>
+    <option option_id="EWRmedio_custom2_params" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>rows=2
+inputclass=Elastic</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1203"/>
+    </option>
+    <option option_id="EWRmedio_custom2_type" edit_format="select" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>textbox=Text Box
+spinbox=Spin Box
+onoff=On/Off Check Box
+radio=Radio Buttons
+select=Select Menu
+checkbox=Check Boxes</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1202"/>
+    </option>
+    <option option_id="EWRmedio_custom3_name" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1301"/>
+    </option>
+    <option option_id="EWRmedio_custom3_params" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>rows=2
+inputclass=Elastic</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1303"/>
+    </option>
+    <option option_id="EWRmedio_custom3_type" edit_format="select" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>textbox=Text Box
+spinbox=Spin Box
+onoff=On/Off Check Box
+radio=Radio Buttons
+select=Select Menu
+checkbox=Check Boxes</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1302"/>
+    </option>
+    <option option_id="EWRmedio_custom4_name" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1401"/>
+    </option>
+    <option option_id="EWRmedio_custom4_params" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>rows=2
+inputclass=Elastic</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1403"/>
+    </option>
+    <option option_id="EWRmedio_custom4_type" edit_format="select" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>textbox=Text Box
+spinbox=Spin Box
+onoff=On/Off Check Box
+radio=Radio Buttons
+select=Select Menu
+checkbox=Check Boxes</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1402"/>
+    </option>
+    <option option_id="EWRmedio_custom5_name" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1501"/>
+    </option>
+    <option option_id="EWRmedio_custom5_params" edit_format="textbox" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>rows=2
+inputclass=Elastic</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1503"/>
+    </option>
+    <option option_id="EWRmedio_custom5_type" edit_format="select" data_type="string" can_backup="1">
+      <default_value></default_value>
+      <edit_format_params>textbox=Text Box
+spinbox=Spin Box
+onoff=On/Off Check Box
+radio=Radio Buttons
+select=Select Menu
+checkbox=Check Boxes</edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="1502"/>
+    </option>
+    <option option_id="EWRmedio_emailIncludeMessage" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>1</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="emailOptions" display_order="330"/>
+      <relation group_id="EWRmedio" display_order="303"/>
+    </option>
+    <option option_id="EWRmedio_maxcloud" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>25</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="503"/>
+    </option>
+    <option option_id="EWRmedio_maxkeyword" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>20</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="508"/>
+    </option>
+    <option option_id="EWRmedio_mediacount" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>20</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="101"/>
+    </option>
+    <option option_id="EWRmedio_mincloud" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>8</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="502"/>
+    </option>
+    <option option_id="EWRmedio_minkeyword" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>3</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="507"/>
+    </option>
+    <option option_id="EWRmedio_newkeywords" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>1</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="505"/>
+    </option>
+    <option option_id="EWRmedio_popularcount" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>4</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="103"/>
+    </option>
+    <option option_id="EWRmedio_recentcount" edit_format="spinbox" data_type="unsigned_integer" can_backup="1">
+      <default_value>12</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="102"/>
+    </option>
+    <option option_id="EWRmedio_retrievekeywords" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>1</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="EWRmedio" display_order="506"/>
+    </option>
+  </optiongroups>
+  <permissions>
+    <permission_groups>
+      <permission_group permission_group_id="EWRmedio"/>
+    </permission_groups>
+    <permissions>
+      <permission permission_group_id="EWRmedio" permission_id="canAdmin" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="10"/>
+      <permission permission_group_id="EWRmedio" permission_id="canBrowse" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="1"/>
+      <permission permission_group_id="EWRmedio" permission_id="canBypass" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="7"/>
+      <permission permission_group_id="EWRmedio" permission_id="canComment" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="5"/>
+      <permission permission_group_id="EWRmedio" permission_id="canLike" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="4"/>
+      <permission permission_group_id="EWRmedio" permission_id="canMod" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="9"/>
+      <permission permission_group_id="EWRmedio" permission_id="canPlaylist" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="8"/>
+      <permission permission_group_id="EWRmedio" permission_id="canReport" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="3"/>
+      <permission permission_group_id="EWRmedio" permission_id="canSubmit" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="6"/>
+      <permission permission_group_id="EWRmedio" permission_id="canView" permission_type="flag" default_value="unset" interface_group_id="EWRmedio" display_order="2"/>
+    </permissions>
+    <interface_groups>
+      <interface_group interface_group_id="EWRmedio" display_order="1000"/>
+    </interface_groups>
+  </permissions>
+  <phrases>
+    <phrase title="add_to_playlist" version_id="3" version_string="1.0.3"><![CDATA[Add To Playlist]]></phrase>
+    <phrase title="administrate_categories" version_id="1" version_string="1.0.0"><![CDATA[Administrate Categories]]></phrase>
+    <phrase title="administrate_keywords" version_id="1" version_string="1.0.0"><![CDATA[Administrate Keywords]]></phrase>
+    <phrase title="administrate_media" version_id="36" version_string="1.3.6"><![CDATA[Administrate Media]]></phrase>
+    <phrase title="administrate_services" version_id="1" version_string="1.0.0"><![CDATA[Administrate Services]]></phrase>
+    <phrase title="all_watched_media" version_id="52" version_string="1.5.2"><![CDATA[All Watched Media]]></phrase>
+    <phrase title="automatically_watch_media_you_create_or_when_you_reply" version_id="52" version_string="1.5.2"><![CDATA[Automatically watch media that you create or when you reply]]></phrase>
+    <phrase title="autoplay_next_item_in_playlist" version_id="51" version_string="1.5.1"><![CDATA[Autoplay next item in playlist]]></phrase>
+    <phrase title="categories" version_id="1" version_string="1.0.0"><![CDATA[Categories]]></phrase>
+    <phrase title="category" version_id="1" version_string="1.0.0"><![CDATA[Category]]></phrase>
+    <phrase title="channel_name" version_id="39" version_string="1.3.9"><![CDATA[Channel Name]]></phrase>
+    <phrase title="click_here_to_view_more_media_from_x" version_id="25" version_string="1.2.5"><![CDATA[<a href="{link}">Click here to view more media from {source}</a>]]></phrase>
+    <phrase title="click_here_to_view_the_media_x" version_id="4" version_string="1.0.4"><![CDATA[Click here to view the media library page for this item "{media}"]]></phrase>
+    <phrase title="comment_on_media_x" version_id="25" version_string="1.2.5"><![CDATA[Comment on media '{title}']]></phrase>
+    <phrase title="create_media_thread" version_id="21" version_string="1.2.1"><![CDATA[Create Media Thread]]></phrase>
+    <phrase title="create_media_thread_deleted" version_id="36" version_string="1.3.6"><![CDATA[[QUOTE][CENTER][SIZE=4]An administrator or the original uploader has deleted this media from the library.[/SIZE][/CENTER]
+
+[CENTER][SIZE=6][B]This thread has now been automatically locked.[/B][/SIZE][/CENTER][/QUOTE]]]></phrase>
+    <phrase title="create_media_thread_hint" version_id="21" version_string="1.2.1"><![CDATA[A thread will be created in "<a href="{link}">{forum}</a>" for this submission.]]></phrase>
+    <phrase title="create_media_thread_title" version_id="21" version_string="1.2.1"><![CDATA[Media: {title}]]></phrase>
+    <phrase title="create_new_keywords" version_id="34" version_string="1.3.4"><![CDATA[Create New Keywords]]></phrase>
+    <phrase title="create_new_playlist" version_id="3" version_string="1.0.3"><![CDATA[Create New Playlist]]></phrase>
+    <phrase title="cron_entry_EWRmedio_cleanUpDaily" version_id="52" version_string="1.5.2"><![CDATA[XenMedio: Daily Clean Up]]></phrase>
+    <phrase title="data_feed_url" version_id="1" version_string="1.0.0"><![CDATA[Data Feed URL]]></phrase>
+    <phrase title="date_submitted" version_id="1" version_string="1.0.0"><![CDATA[Date Submitted]]></phrase>
+    <phrase title="delete_category_hint" version_id="36" version_string="1.3.6"><![CDATA[Are you sure you wish to delete this category?<br />
+Existing media will be moved to the parent node.]]></phrase>
+    <phrase title="delete_comment_by_x" version_id="1" version_string="1.0.0"><![CDATA[Delete Comment By {name}]]></phrase>
+    <phrase title="delete_keywords" version_id="1" version_string="1.0.0"><![CDATA[Delete Keywords]]></phrase>
+    <phrase title="delete_media" version_id="1" version_string="1.0.0"><![CDATA[Delete Media]]></phrase>
+    <phrase title="delete_media_hint" version_id="36" version_string="1.3.6"><![CDATA[Are you sure you wish to delete this media?]]></phrase>
+    <phrase title="delete_playlist" version_id="3" version_string="1.0.3"><![CDATA[Delete Playlist]]></phrase>
+    <phrase title="delete_playlist_hint" version_id="36" version_string="1.3.6"><![CDATA[Are you sure you wish to delete this playlist?]]></phrase>
+    <phrase title="disable_category" version_id="23" version_string="1.2.3"><![CDATA[Disable Category (Act as Parent Only)]]></phrase>
+    <phrase title="disable_category_hint" version_id="23" version_string="1.2.3"><![CDATA[Disabled categories will not be open for media submission.]]></phrase>
+    <phrase title="duration" version_id="1" version_string="1.0.0"><![CDATA[Duration]]></phrase>
+    <phrase title="edit_comment_by_x" version_id="1" version_string="1.0.0"><![CDATA[Edit Comment by {name}]]></phrase>
+    <phrase title="embed_movie" version_id="1" version_string="1.0.0"><![CDATA[Embed Movie]]></phrase>
+    <phrase title="favorites_private" version_id="3" version_string="1.0.3"><![CDATA[Favorites - PRIVATE]]></phrase>
+    <phrase title="file_does_not_exist" version_id="6" version_string="1.0.6"><![CDATA[File does not exist]]></phrase>
+    <phrase title="gallery" version_id="23" version_string="1.2.3"><![CDATA[Gallery]]></phrase>
+    <phrase title="import_service" version_id="1" version_string="1.0.0"><![CDATA[Import Service]]></phrase>
+    <phrase title="in_category" version_id="30" version_string="1.3.0"><![CDATA[in category]]></phrase>
+    <phrase title="ip_information_for_comment" version_id="1" version_string="1.0.0"><![CDATA[IP address information for comment by {user}]]></phrase>
+    <phrase title="json" version_id="1" version_string="1.0.0"><![CDATA[JSON]]></phrase>
+    <phrase title="library_statistics" version_id="1" version_string="1.0.0"><![CDATA[Library Statistics]]></phrase>
+    <phrase title="likes_your_media" version_id="25" version_string="1.2.5"><![CDATA[Likes your media]]></phrase>
+    <phrase title="like_media" version_id="25" version_string="1.2.5"><![CDATA[Like Media]]></phrase>
+    <phrase title="media_added_by_x" version_id="1" version_string="1.0.0"><![CDATA[Media added by "{user}". <a href="{link}">Click here to view this user's profile</a>.]]></phrase>
+    <phrase title="media_already_exists_in_library" version_id="36" version_string="1.3.6"><![CDATA[This media already exists in the media library.]]></phrase>
+    <phrase title="media_by" version_id="30" version_string="1.3.0"><![CDATA[Media by]]></phrase>
+    <phrase title="media_categories" version_id="1" version_string="1.0.0"><![CDATA[Media Categories]]></phrase>
+    <phrase title="media_details" version_id="1" version_string="1.0.0"><![CDATA[Media Details]]></phrase>
+    <phrase title="media_hosted_on_x" version_id="1" version_string="1.0.0"><![CDATA[Media hosted on "{service}" media streaming service.]]></phrase>
+    <phrase title="media_in_moderation_queue" version_id="26" version_string="1.2.6"><![CDATA[This media is currently in the moderation queue. Only people who know the link will be able to view it.<br />
+This media will not appear in any public spaces until it has been reviewed and approved by a moderator.]]></phrase>
+    <phrase title="media_keyword" version_id="5" version_string="1.0.5"><![CDATA[Keyword]]></phrase>
+    <phrase title="media_keywords" version_id="5" version_string="1.0.5"><![CDATA[Keywords]]></phrase>
+    <phrase title="media_keyword_cloud" version_id="5" version_string="1.0.5"><![CDATA[Keyword Cloud]]></phrase>
+    <phrase title="media_keyword_hint" version_id="20" version_string="1.2.0"><![CDATA[Each keyword should be separated with a comma. ( , )]]></phrase>
+    <phrase title="media_library" version_id="4" version_string="1.0.4"><![CDATA[Media Library]]></phrase>
+    <phrase title="media_tagged_with_x" version_id="1" version_string="1.0.0"><![CDATA[Media tagged with "{keyword}" by the original uploader or moderators.]]></phrase>
+    <phrase title="media_url" version_id="1" version_string="1.0.0"><![CDATA[Media URL]]></phrase>
+    <phrase title="media_url_did_not_match_services" version_id="1" version_string="1.0.0"><![CDATA[Media URL did not match any supported services.]]></phrase>
+    <phrase title="media_url_did_not_retrieve_valid_data" version_id="1" version_string="1.0.0"><![CDATA[Media URL did not retrieve valid data.]]></phrase>
+    <phrase title="members_who_liked_this_media" version_id="25" version_string="1.2.5"><![CDATA[Members Who Liked this Media]]></phrase>
+    <phrase title="mrss" version_id="1" version_string="1.0.0"><![CDATA[MRSS]]></phrase>
+    <phrase title="news_feed_media_comment_insert" version_id="25" version_string="1.2.5"><![CDATA[{poster} left a comment on the media <a href="{link}">{title}</a>.]]></phrase>
+    <phrase title="news_feed_media_insert" version_id="25" version_string="1.2.5"><![CDATA[{username} submitted a new media.]]></phrase>
+    <phrase title="no_media_in_category" version_id="1" version_string="1.0.0"><![CDATA[There has not yet been any media added to this category...]]></phrase>
+    <phrase title="no_media_in_playlist" version_id="3" version_string="1.0.3"><![CDATA[There has not yet been any media added to this playlist...]]></phrase>
+    <phrase title="only_supported_by_x" version_id="51" version_string="1.5.1"><![CDATA[Only supported by {services}...]]></phrase>
+    <phrase title="option_EWRmedio_animatedcloud" version_id="1" version_string="1.0.0"><![CDATA[Enable Animated Cloud?]]></phrase>
+    <phrase title="option_EWRmedio_animatedcloud_explain" version_id="1" version_string="1.0.0"><![CDATA[Disabling the animated keyword cloud will default to a static cloud.]]></phrase>
+    <phrase title="option_EWRmedio_autocheck" version_id="3" version_string="1.0.3"><![CDATA[Auto Check Thread Box]]></phrase>
+    <phrase title="option_EWRmedio_autocheck_explain" version_id="3" version_string="1.0.3"><![CDATA[If set, the auto thread creation check box will be checked by default.]]></phrase>
+    <phrase title="option_EWRmedio_autoforum" version_id="3" version_string="1.0.3"><![CDATA[Auto Thread Forum]]></phrase>
+    <phrase title="option_EWRmedio_autoforum_explain" version_id="3" version_string="1.0.3"><![CDATA[Autoposted threads will be posted to this forum. (unspecify to disable)]]></phrase>
+    <phrase title="option_EWRmedio_autolock" version_id="3" version_string="1.0.3"><![CDATA[Auto Lock Threads]]></phrase>
+    <phrase title="option_EWRmedio_autolock_explain" version_id="23" version_string="1.2.3"><![CDATA[If set, threads will automatically get locked to prevent posting. If this setting is enabled, when a user clicks on a media thread, they will instead be brought to the media and comment page.]]></phrase>
+    <phrase title="option_EWRmedio_autoplay" version_id="1" version_string="1.0.0"><![CDATA[Autoplay Embedded Media?]]></phrase>
+    <phrase title="option_EWRmedio_autoplay_explain" version_id="1" version_string="1.0.0"><![CDATA[If set, media will automatically begin playing when displayed in the library.]]></phrase>
+    <phrase title="option_EWRmedio_cloudcount" version_id="1" version_string="1.0.0"><![CDATA[Keyword Cloud Count]]></phrase>
+    <phrase title="option_EWRmedio_cloudcount_explain" version_id="1" version_string="1.0.0"><![CDATA[The maximum number of keywords to display on the keyword cloud.]]></phrase>
+    <phrase title="option_EWRmedio_commentcount" version_id="1" version_string="1.0.0"><![CDATA[Comments Per Page]]></phrase>
+    <phrase title="option_EWRmedio_commentcount_explain" version_id="1" version_string="1.0.0"><![CDATA[The maximum number of comments to display per page on media details.]]></phrase>
+    <phrase title="option_EWRmedio_custom1_name" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 1 Name]]></phrase>
+    <phrase title="option_EWRmedio_custom1_name_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom1_params" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 1 Parameters]]></phrase>
+    <phrase title="option_EWRmedio_custom1_params_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom1_type" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 1 Type]]></phrase>
+    <phrase title="option_EWRmedio_custom1_type_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom2_name" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 2 Name]]></phrase>
+    <phrase title="option_EWRmedio_custom2_name_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom2_params" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 2 Parameters]]></phrase>
+    <phrase title="option_EWRmedio_custom2_params_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom2_type" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 2 Type]]></phrase>
+    <phrase title="option_EWRmedio_custom2_type_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom3_name" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 3 Name]]></phrase>
+    <phrase title="option_EWRmedio_custom3_name_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom3_params" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 3 Parameters]]></phrase>
+    <phrase title="option_EWRmedio_custom3_params_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom3_type" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 3 Type]]></phrase>
+    <phrase title="option_EWRmedio_custom3_type_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom4_name" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 4 Name]]></phrase>
+    <phrase title="option_EWRmedio_custom4_name_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom4_params" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 4 Parameters]]></phrase>
+    <phrase title="option_EWRmedio_custom4_params_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom4_type" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 4 Type]]></phrase>
+    <phrase title="option_EWRmedio_custom4_type_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom5_name" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 5 Name]]></phrase>
+    <phrase title="option_EWRmedio_custom5_name_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom5_params" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 5 Parameters]]></phrase>
+    <phrase title="option_EWRmedio_custom5_params_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_custom5_type" version_id="53" version_string="1.5.3"><![CDATA[Custom Field 5 Type]]></phrase>
+    <phrase title="option_EWRmedio_custom5_type_explain" version_id="53" version_string="1.5.3"><![CDATA[]]></phrase>
+    <phrase title="option_EWRmedio_emailIncludeMessage" version_id="52" version_string="1.5.2"><![CDATA[Include full message text in watched media notification emails.]]></phrase>
+    <phrase title="option_EWRmedio_emailIncludeMessage_explain" version_id="52" version_string="1.5.2"><![CDATA[With this option enabled, notification emails sent to users watching media will contain the full text of the message about which they are being notified. With this option disabled, they will need to visit the forum to read the message.]]></phrase>
+    <phrase title="option_EWRmedio_maxcloud" version_id="1" version_string="1.0.0"><![CDATA[Maximum Cloud Font Size]]></phrase>
+    <phrase title="option_EWRmedio_maxcloud_explain" version_id="1" version_string="1.0.0"><![CDATA[The maximum text size for keywords displayed in the keyword cloud.]]></phrase>
+    <phrase title="option_EWRmedio_maxkeyword" version_id="1" version_string="1.0.0"><![CDATA[Maximum Keyword Length]]></phrase>
+    <phrase title="option_EWRmedio_maxkeyword_explain" version_id="3" version_string="1.0.3"><![CDATA[The maximum length required for a keyword. Keywords longer will be truncated.]]></phrase>
+    <phrase title="option_EWRmedio_mediacount" version_id="1" version_string="1.0.0"><![CDATA[Media Per Page]]></phrase>
+    <phrase title="option_EWRmedio_mediacount_explain" version_id="1" version_string="1.0.0"><![CDATA[The maximum number of media to display per page on categories.]]></phrase>
+    <phrase title="option_EWRmedio_mincloud" version_id="1" version_string="1.0.0"><![CDATA[Minimum Cloud Font Size]]></phrase>
+    <phrase title="option_EWRmedio_mincloud_explain" version_id="1" version_string="1.0.0"><![CDATA[The minimum text size for keywords displayed in the keyword cloud.]]></phrase>
+    <phrase title="option_EWRmedio_minkeyword" version_id="1" version_string="1.0.0"><![CDATA[Minimum Keyword Length]]></phrase>
+    <phrase title="option_EWRmedio_minkeyword_explain" version_id="3" version_string="1.0.3"><![CDATA[The minimum length required for a keyword. Keywords shorter will be ignored.]]></phrase>
+    <phrase title="option_EWRmedio_newkeywords" version_id="34" version_string="1.3.4"><![CDATA[Create New Keywords?]]></phrase>
+    <phrase title="option_EWRmedio_newkeywords_explain" version_id="34" version_string="1.3.4"><![CDATA[Disabling new keywords will prevent users from creating new keywords.]]></phrase>
+    <phrase title="option_EWRmedio_popularcount" version_id="1" version_string="1.0.0"><![CDATA[Popular Media Count]]></phrase>
+    <phrase title="option_EWRmedio_popularcount_explain" version_id="1" version_string="1.0.0"><![CDATA[The maximum number of popular entries to display on the media home.]]></phrase>
+    <phrase title="option_EWRmedio_recentcount" version_id="1" version_string="1.0.0"><![CDATA[Recent Media Count]]></phrase>
+    <phrase title="option_EWRmedio_recentcount_explain" version_id="1" version_string="1.0.0"><![CDATA[The maximum number of recent entries to display on the media home.]]></phrase>
+    <phrase title="option_EWRmedio_retrievekeywords" version_id="1" version_string="1.0.0"><![CDATA[Retrieve Keywords?]]></phrase>
+    <phrase title="option_EWRmedio_retrievekeywords_explain" version_id="34" version_string="1.3.4"><![CDATA[You can set media submissions to not automatically retrieve keywords.<br />
+<b>This function will fail if "Create New Keywords" is disabled.</b>]]></phrase>
+    <phrase title="option_group_EWRmedio" version_id="1" version_string="1.0.0"><![CDATA[[8wayRun.Com] XenMedio (Media)]]></phrase>
+    <phrase title="option_group_EWRmedio_description" version_id="1" version_string="1.0.0"><![CDATA[[8wayRun.Com] XenMedio (Media)]]></phrase>
+    <phrase title="permission_EWRmedio_canAdmin" version_id="1" version_string="1.0.0"><![CDATA[Can Administrate Media]]></phrase>
+    <phrase title="permission_EWRmedio_canBrowse" version_id="1" version_string="1.0.0"><![CDATA[Can Browse Library]]></phrase>
+    <phrase title="permission_EWRmedio_canBypass" version_id="25" version_string="1.2.5"><![CDATA[Can Bypass Moderation]]></phrase>
+    <phrase title="permission_EWRmedio_canComment" version_id="1" version_string="1.0.0"><![CDATA[Can Comment on Media]]></phrase>
+    <phrase title="permission_EWRmedio_canLike" version_id="25" version_string="1.2.5"><![CDATA[Can Like Media]]></phrase>
+    <phrase title="permission_EWRmedio_canMod" version_id="1" version_string="1.0.0"><![CDATA[Can Moderate Media]]></phrase>
+    <phrase title="permission_EWRmedio_canPlaylist" version_id="1" version_string="1.0.0"><![CDATA[Can Create Playlists]]></phrase>
+    <phrase title="permission_EWRmedio_canReport" version_id="1" version_string="1.0.0"><![CDATA[Can Report Media]]></phrase>
+    <phrase title="permission_EWRmedio_canSubmit" version_id="1" version_string="1.0.0"><![CDATA[Can Submit Media]]></phrase>
+    <phrase title="permission_EWRmedio_canView" version_id="1" version_string="1.0.0"><![CDATA[Can View Media Details]]></phrase>
+    <phrase title="permission_group_EWRmedio" version_id="1" version_string="1.0.0"><![CDATA[[8wayRun.Com] XenMedio (Media)]]></phrase>
+    <phrase title="permission_interface_EWRmedio" version_id="1" version_string="1.0.0"><![CDATA[[8wayRun.Com] XenMedio (Media)]]></phrase>
+    <phrase title="playlist" version_id="3" version_string="1.0.3"><![CDATA[Playlist]]></phrase>
+    <phrase title="playlists" version_id="3" version_string="1.0.3"><![CDATA[Playlists]]></phrase>
+    <phrase title="playlists_added_by_x" version_id="51" version_string="1.5.1"><![CDATA[Playlists added by "{user}". <a href="{link}">Click here to view this user's profile</a>.]]></phrase>
+    <phrase title="playlist_by_x" version_id="51" version_string="1.5.1"><![CDATA[Playlist by {user}]]></phrase>
+    <phrase title="playlist_details" version_id="3" version_string="1.0.3"><![CDATA[Playlist Details]]></phrase>
+    <phrase title="playlist_last_updated" version_id="51" version_string="1.5.1"><![CDATA[Last updated:]]></phrase>
+    <phrase title="please_select_a_new_parent_category_node" version_id="1" version_string="1.0.0"><![CDATA[Please select a new parent category node... all existing media within this category will be moved to the selected new category.]]></phrase>
+    <phrase title="popular_media" version_id="1" version_string="1.0.0"><![CDATA[Popular Media]]></phrase>
+    <phrase title="previous" version_id="3" version_string="1.0.3"><![CDATA[Previous]]></phrase>
+    <phrase title="provided_file_is_not_a_service_xml_file" version_id="1" version_string="1.0.0"><![CDATA[The provided file is not a service XML file.]]></phrase>
+    <phrase title="random_media" version_id="1" version_string="1.0.0"><![CDATA[Random Media]]></phrase>
+    <phrase title="rebuild_services" version_id="24" version_string="1.2.4"><![CDATA[Rebuild Services]]></phrase>
+    <phrase title="recently_updated" version_id="51" version_string="1.5.1"><![CDATA[Recently updated]]></phrase>
+    <phrase title="recent_media" version_id="1" version_string="1.0.0"><![CDATA[Recent Media]]></phrase>
+    <phrase title="remove_from_playlist" version_id="38" version_string="1.3.8"><![CDATA[Remove From Playlist]]></phrase>
+    <phrase title="remove_from_playlist_hint" version_id="38" version_string="1.3.8"><![CDATA[Are you sure you wish to remove this media from this playlist?]]></phrase>
+    <phrase title="replies_to_watched_media" version_id="52" version_string="1.5.2"><![CDATA[Replies to a watched media]]></phrase>
+    <phrase title="reply_to_watched_media_x" version_id="52" version_string="1.5.2"><![CDATA[{title} - New reply to watched media]]></phrase>
+    <phrase title="report_comment" version_id="1" version_string="1.0.0"><![CDATA[Report Comment]]></phrase>
+    <phrase title="report_media" version_id="25" version_string="1.2.5"><![CDATA[Report Media]]></phrase>
+    <phrase title="retrieve_information" version_id="1" version_string="1.0.0"><![CDATA[Retrieve Information]]></phrase>
+    <phrase title="save_keywords" version_id="34" version_string="1.3.4"><![CDATA[Save Keywords]]></phrase>
+    <phrase title="save_media" version_id="1" version_string="1.0.0"><![CDATA[Save Media]]></phrase>
+    <phrase title="save_playlist" version_id="3" version_string="1.0.3"><![CDATA[Save Playlist]]></phrase>
+    <phrase title="save_service" version_id="1" version_string="1.0.0"><![CDATA[Save Service]]></phrase>
+    <phrase title="search_media" version_id="1" version_string="1.0.0"><![CDATA[Search Media]]></phrase>
+    <phrase title="service" version_id="1" version_string="1.0.0"><![CDATA[Service]]></phrase>
+    <phrase title="services" version_id="3" version_string="1.0.3"><![CDATA[Services]]></phrase>
+    <phrase title="serviceval" version_id="36" version_string="1.3.6"><![CDATA[serviceVAL]]></phrase>
+    <phrase title="serviceval2" version_id="1" version_string="1.0.0"><![CDATA[serviceVAL2]]></phrase>
+    <phrase title="show_all_watched_media" version_id="52" version_string="1.5.2"><![CDATA[Show all watched media]]></phrase>
+    <phrase title="someone_likes_one_of_your_media" version_id="25" version_string="1.2.5"><![CDATA[Someone likes one of your media]]></phrase>
+    <phrase title="someone_replies_to_media_you_are_watching" version_id="52" version_string="1.5.2"><![CDATA[Someone replies to a media you are watching]]></phrase>
+    <phrase title="stop_watching_media" version_id="52" version_string="1.5.2"><![CDATA[Stop watching media]]></phrase>
+    <phrase title="stop_watching_this_media" version_id="52" version_string="1.5.2"><![CDATA[Stop Watching This Media]]></phrase>
+    <phrase title="submit_media" version_id="1" version_string="1.0.0"><![CDATA[Submit Media]]></phrase>
+    <phrase title="submit_youtube_channel" version_id="39" version_string="1.3.9"><![CDATA[Submit YouTube Channel]]></phrase>
+    <phrase title="there_no_media_to_display" version_id="52" version_string="1.5.2"><![CDATA[There are no media to display.]]></phrase>
+    <phrase title="this_is_list_of_all_media_that_you_watching" version_id="52" version_string="1.5.2"><![CDATA[This is a list of all the media that you are watching.]]></phrase>
+    <phrase title="this_is_list_of_x_most_recently_updated_media_unread_comments" version_id="52" version_string="1.5.2"><![CDATA[This is a list of the {count} most recently-updated media with unread comments that you are watching.]]></phrase>
+    <phrase title="top_contributors" version_id="1" version_string="1.0.0"><![CDATA[Top Contributors]]></phrase>
+    <phrase title="total_categories" version_id="1" version_string="1.0.0"><![CDATA[Total Categories]]></phrase>
+    <phrase title="total_comments" version_id="1" version_string="1.0.0"><![CDATA[Total Comments]]></phrase>
+    <phrase title="total_likes" version_id="1" version_string="1.0.0"><![CDATA[Total Likes]]></phrase>
+    <phrase title="total_media" version_id="1" version_string="1.0.0"><![CDATA[Total Media]]></phrase>
+    <phrase title="total_views" version_id="1" version_string="1.0.0"><![CDATA[Total Views]]></phrase>
+    <phrase title="trackback_url" version_id="1" version_string="1.0.0"><![CDATA[Trackback URL]]></phrase>
+    <phrase title="unlike_media" version_id="25" version_string="1.2.5"><![CDATA[Unlike Media]]></phrase>
+    <phrase title="unread_watched_media" version_id="52" version_string="1.5.2"><![CDATA[Unread Watched Media]]></phrase>
+    <phrase title="unwatch_media" version_id="52" version_string="1.5.2"><![CDATA[Unwatch Media]]></phrase>
+    <phrase title="update_category_order" version_id="1" version_string="1.0.0"><![CDATA[Update Category Order]]></phrase>
+    <phrase title="upload_new_thumbnail" version_id="1" version_string="1.0.0"><![CDATA[Upload New Thumbnail]]></phrase>
+    <phrase title="validate_submit_media_category" version_id="1" version_string="1.0.0"><![CDATA[Please select a category for your media...]]></phrase>
+    <phrase title="validate_submit_media_duration" version_id="1" version_string="1.0.0"><![CDATA[Please enter a duration for your media...]]></phrase>
+    <phrase title="validate_submit_media_keywords" version_id="1" version_string="1.0.0"><![CDATA[Please enter some keywords for your media...]]></phrase>
+    <phrase title="validate_submit_media_title" version_id="1" version_string="1.0.0"><![CDATA[Please enter a title for your media...]]></phrase>
+    <phrase title="video" version_id="23" version_string="1.2.3"><![CDATA[Video]]></phrase>
+    <phrase title="videos" version_id="51" version_string="1.5.1"><![CDATA[videos]]></phrase>
+    <phrase title="viewing_media" version_id="26" version_string="1.2.6"><![CDATA[Viewing media]]></phrase>
+    <phrase title="viewing_media_library" version_id="26" version_string="1.2.6"><![CDATA[Viewing media library]]></phrase>
+    <phrase title="viewing_media_playlist" version_id="26" version_string="1.2.6"><![CDATA[Viewing media playlist]]></phrase>
+    <phrase title="view_this_media" version_id="52" version_string="1.5.2"><![CDATA[View this Media]]></phrase>
+    <phrase title="watched_media" version_id="52" version_string="1.5.2"><![CDATA[Watched Media]]></phrase>
+    <phrase title="watched_media_email_html_footer_1" version_id="52" version_string="1.5.2"><![CDATA[This message was sent to you because you opted to watch the media {media} at {board} with email notification of new replies.]]></phrase>
+    <phrase title="watched_media_email_html_footer_2" version_id="52" version_string="1.5.2"><![CDATA[To stop receiving email, please <a href="{watch_link}" style="{link_style}">change your watching options for this media</a>. You may also <a href="{manage_link}" style="{link_style}">review all your watched media</a>.]]></phrase>
+    <phrase title="watched_media_reply_email_html" version_id="52" version_string="1.5.2"><![CDATA[{receiver}, {replier} replied to a media you are watching at {board}.]]></phrase>
+    <phrase title="watched_media_reply_email_text" version_id="52" version_string="1.5.2"><![CDATA[{receiver_username},
+
+{username} replied to a media you are watching at {board_title}.
+
+	"{title}"
+
+----------------------------------------------------------------------
+
+To view this media, click here:
+{view_link}
+
+You will not receive any further emails about this media until you have read the new messages.
+
+----------------------------------------------------------------------
+
+This message was sent to you because you opted to watch the media "{title}" at {board_title} with email notification of new replies.
+
+To stop receiving email, please change your watching options for this media.
+{watch_link}
+
+You may also review all your watched media.
+{manage_link}
+
+{board_link}]]></phrase>
+    <phrase title="watched_media_reply_messagetext_email_text" version_id="52" version_string="1.5.2"><![CDATA[{receiver_username},
+
+{username} replied to a media you are watching at {board_title}.
+
+	"{title}"
+
+This is the message they posted:
+----------------------------------------------------------------------
+{message}
+----------------------------------------------------------------------
+
+To view this media, click here:
+{view_link}
+
+You will not receive any further emails about this media until you have read the new messages.
+
+----------------------------------------------------------------------
+
+This message was sent to you because you opted to watch the media "{title}" at {board_title} with email notification of new replies.
+
+To stop receiving email, please change your watching options for this media.
+{watch_link}
+
+You may also review all your watched media.
+{manage_link}
+
+{board_link}]]></phrase>
+    <phrase title="watch_media" version_id="52" version_string="1.5.2"><![CDATA[Watch Media]]></phrase>
+    <phrase title="watch_media_button" version_id="52" version_string="1.5.2"><![CDATA[Watch Media]]></phrase>
+    <phrase title="watch_this_media" version_id="52" version_string="1.5.2"><![CDATA[Watch this media]]></phrase>
+    <phrase title="watch_this_media_sentence" version_id="52" version_string="1.5.2"><![CDATA[Watch this media]]></phrase>
+    <phrase title="x_images" version_id="22" version_string="1.2.2"><![CDATA[{count} images]]></phrase>
+    <phrase title="x_liked_your_media_y" version_id="25" version_string="1.2.5"><![CDATA[{name} liked your media <a href="{link}">{title}</a>.]]></phrase>
+    <phrase title="x_liked_ys_media_z" version_id="25" version_string="1.2.5"><![CDATA[{name} liked <a href="{posterLink}">{poster}'s</a> media <a href="{link}">{title}</a>.]]></phrase>
+    <phrase title="x_replied_to_media_y_may_be_more" version_id="52" version_string="1.5.2"><![CDATA[{name} replied to the media {title}. There may be more comments after this.]]></phrase>
+    <phrase title="your_comment_has_been_posted" version_id="3" version_string="1.0.3"><![CDATA[Your comment has been posted; it will show up shortly...]]></phrase>
+    <phrase title="you_are_watching_this_media_use_button_to_stop" version_id="52" version_string="1.5.2"><![CDATA[You are watching this media. Use the button below if you would like to stop watching this media.]]></phrase>
+    <phrase title="you_do_not_have_any_watched_media_that_unread" version_id="52" version_string="1.5.2"><![CDATA[You do not have any watched media that are unread.]]></phrase>
+    <phrase title="you_not_watching_any_media" version_id="52" version_string="1.5.2"><![CDATA[You are not watching any media.]]></phrase>
+    <phrase title="you_sure_you_want_to_like_this_media" version_id="25" version_string="1.2.5"><![CDATA[Are you sure you want to like this media?]]></phrase>
+    <phrase title="you_sure_you_want_to_unlike_this_media" version_id="25" version_string="1.2.5"><![CDATA[Are you sure you want to unlike this media?]]></phrase>
+  </phrases>
+  <route_prefixes>
+    <route_type type="public">
+      <prefix original_prefix="media" class="EWRmedio_Route_Media" build_link="data_only"/>
+    </route_type>
+  </route_prefixes>
+  <style_properties/>
+  <templates>
+    <template title="alert_media_comment_insert" version_id="52" version_string="1.5.2"><![CDATA[{xen:phrase x_replied_to_media_y_may_be_more,
+	'name={xen:helper username, $user, 'subject'}',
+	'title=<a href="{xen:link media, $content}" class="PopupItemLink">{$content.media_title}</a>'}]]></template>
+    <template title="alert_media_like" version_id="25" version_string="1.2.5"><![CDATA[{xen:phrase x_liked_your_media_y,
+	'name={xen:helper username, $user, 'subject'}',
+	'link={xen:link media, $content}',
+	'title={$content.media_title}'}]]></template>
+    <template title="EWRmedio.css" version_id="53" version_string="1.5.3"><![CDATA[#embed_player { margin: 0px -50px; }
+
+.mediaList ul { text-align: center; }
+.mediaList li { position: relative; display: inline-block; width: 32.5%; }
+.mediaList li .secondaryContent { margin: 10px 3px 0px; padding: 20px; }
+
+.mediaSmall ul { text-align: center; }
+.mediaSmall li { position: relative; display: inline-block; width: 49%; }
+.mediaSmall li .mediaContent { margin: 0px 3px 10px; }
+.mediaSmall li .mediaContent .title { display: inline-block; height: 26px; overflow: hidden; }
+.mediaSmall li .mediaContent .image { position: relative; }
+.mediaSmall li .mediaContent .image img { width: 100%; }
+
+.mediaNav .pairsJustified dl { margin-left: 5px; margin-top: 2px; }
+
+.mediaCloud #keywordCloud { margin: -25px -10px -30px; }
+.mediaCloud #textCloud { margin: 25px 10px 30px; }
+.mediaCloud ul { text-align: center; }
+.mediaCloud li { display: inline; }
+
+.mediaPlayList li { height: 70px; margin: 10px 0px; }
+.mediaPlayList li .secondaryContent { height: 70px; padding: 0px; overflow: hidden; }
+
+.mediaPlayList li .lastPost { float: right; padding: 15px 10px 0px 0px; }
+.mediaPlayList li .subscribeOptions { float: left; padding: 25px 10px 0px; }
+
+.mediaPlayList li .views { float: right; text-align: center; padding: 5px; margin: 13px; color: white; background-color: black; position: relative; z-index: 1; }
+.mediaPlayList li .thumb { float: left; margin-right: 15px; position: relative; }
+.mediaPlayList li .thumb img { width: 120px; }
+.mediaPlayList li .info { padding: 13px; }
+.mediaPlayList li .info b { font-size: 1.1em; white-space: nowrap; }
+.mediaPlayList li .info .muted { font-size: 0.8em; }
+.mediaPlayLists li .info { padding: 15px; }
+.mediaPlayLists li .info b { font-size: 1.5em; }
+{xen:helper clearfix, '.mediaPlayList ul'}
+
+.mediaDetails li { display: inline; }
+.mediaDetails li::after { content: ','; }
+.mediaDetails li:last-child::after { content: ''; }
+.mediaDetails img { max-width: 100%; }
+
+.messageSimpleList li:last-child { margin-bottom: 0px; }
+
+.mediaKeywords ul { max-height: 200px; margin-left: 20px; overflow: auto; }
+.mediaKeywords li { display: inline-block; width: 114px; }
+.adminKeywords li { display: inline-block; width: 19%; padding: 2px; }
+
+.messageSimple textarea
+{
+	height: 54px;
+	width: 100%;
+	box-sizing: border-box;
+	*width: 98%;
+	resize: vertical;
+}
+.messageSimple .submitUnit { margin-top: 5px; text-align: right; }
+
+.overlays
+{
+	background-color: black;
+	color: white;
+	font-size: 10px;
+	padding: 1px 2px 2px;
+	position: absolute;
+}
+.overlays.overBtmL { bottom: 7px; left: 5px; }
+.overlays.overBtmR { bottom: 7px; right: 5px; }
+.overlays a:link, .overlays a:visited { color: white; }
+
+.oControl { width: 17px; height: 15px; float: left; position: static; }
+.pControl { text-align: right; }
+.pControl a { width: 18px; height: 15px; display: inline-block; }
+.oNumbs { float: left; position: static; }
+
+.oComms { background: url('styles/8wayrun/EWRmedio.png') -0px -40px; }
+.oLikes { background: url('styles/8wayrun/EWRmedio.png') -20px -40px; }
+.oViews { background: url('styles/8wayrun/EWRmedio.png') -40px -40px; }
+
+.pRem { background: url('styles/8wayrun/EWRmedio.png') 0px 0px; }
+.pTop { background: url('styles/8wayrun/EWRmedio.png') -20px 0px; }
+.pUpp { background: url('styles/8wayrun/EWRmedio.png') -40px 0px; }
+.pDwn { background: url('styles/8wayrun/EWRmedio.png') -60px 0px; }
+.pBtm { background: url('styles/8wayrun/EWRmedio.png') -80px 0px; }
+
+.pRem:hover { background: url('styles/8wayrun/EWRmedio.png') 0px -20px; }
+.pTop:hover { background: url('styles/8wayrun/EWRmedio.png') -20px -20px; }
+.pUpp:hover { background: url('styles/8wayrun/EWRmedio.png') -40px -20px; }
+.pDwn:hover { background: url('styles/8wayrun/EWRmedio.png') -60px -20px; }
+.pBtm:hover { background: url('styles/8wayrun/EWRmedio.png') -80px -20px; }
+
+.medioBBc { text-align: center; margin: 5px 10px; }
+.medioBBc .bbCodeBlock { width: 340px; display: inline-block; }
+.medioBBc .bbCodeMedio { background-size: 100% !important; }
+.medioBBc a:hover, .medioBBc a:focus { background: transparent; }
+
+.ctrlUnit dd .hint
+{
+	font-size: 11px;
+	color: {xen:property mutedTextColor};
+	margin-left: {xen:property formCtrlIndent};
+	margin-top: 2px;
+}
+
+.sortColumn .sortDelete { float: left; margin: 7px 0px 0px 100px; }
+.sortColumn dt img { height: 38px; } 
+.sortColumn .portlet { border: 1px dotted {xen:property mutedTextColor}; }
+.sortColumn .portlet-placeholder { border: 2px dashed {xen:property contentText}; height: 35px; }
+.sortColumn .portlet-placeholder * { visibility: hidden; }
+
+.copyright { text-align: center; font-size: 11px; margin: 10px; }]]></template>
+    <template title="EWRmedio_AccountPreferences" version_id="52" version_string="1.5.2"><![CDATA[<dl class="ctrlUnit">
+	<dt></dt>
+	<dd>
+		<ul>
+			<li><label><input type="checkbox" name="media_watch_state" value="1" class="Disabler" id="ctrl_media_watch_state" {xen:checked $media.media_watch_state} />
+				{xen:phrase automatically_watch_media_you_create_or_when_you_reply}...</label>
+				<ul id="ctrl_media_watch_state_Disabler">
+					<li><label><input type="checkbox" name="media_watch_state_email" value="1" {xen:checked "{$media.media_watch_state} == 'watch_email'"} />
+						{xen:phrase and_receive_email_notifications_of_replies}</label></li>
+				</ul>
+			</li>
+		</ul>
+	</dd>
+</dl>]]></template>
+    <template title="EWRmedio_AlertPreferences" version_id="52" version_string="1.5.2"><![CDATA[<h3 class="sectionHeader">{xen:phrase media}</h3>
+<dl class="ctrlUnit">
+	<dt>{xen:phrase receive_alert_when_someone}...</dt>
+	<dd>
+		<ul>
+			<li><input type="hidden" name="alertSet[media_comment_insert]" value="1" />
+				<label><input type="checkbox" value="1" name="alert[media_comment_insert]" {xen:checked "!{$alertOptOuts.media_comment_insert}"} /> {xen:phrase replies_to_watched_media}</label>
+				<p class="hint">{xen:phrase someone_replies_to_media_you_are_watching}</p>
+			</li>
+			<li><input type="hidden" name="alertSet[media_like]" value="1" />
+				<label><input type="checkbox" value="1" name="alert[media_like]" {xen:checked "!{$alertOptOuts.media_like}"} /> {xen:phrase likes_your_media}</label>
+				<p class="hint">{xen:phrase someone_likes_one_of_your_media}</p>
+			</li>
+		</ul>
+	</dd>
+</dl>]]></template>
+    <template title="EWRmedio_BBcode" version_id="38" version_string="1.3.8"><![CDATA[<xen:require css="EWRmedio.css" />
+
+<div class="medioBBc" {xen:if $float, 'style="float: {$float};"'}>
+	<div class="bbCodeBlock bbCodeQuote">
+		<div class="attribution type">{$media.media_title}</div>
+		<blockquote>
+			<div class="bbCodeMedio" style="background: url('{xen:helper medio, $media}') no-repeat;">
+				<a href="{xen:link 'media/popout', $media}" class="OverlayTrigger">
+					<img src="styles/8wayrun/EWRmedio_play.png" />
+				</a>
+			</div>
+		</blockquote>
+	</div>
+</div>]]></template>
+    <template title="EWRmedio_BBcode_Full" version_id="26" version_string="1.2.6"><![CDATA[<xen:require css="EWRmedio.css" />
+
+<div style="text-align: center">
+	<a href="{xen:link 'media', $media}"><span style="font-size: large"><b>{$media.media_title}</b></span></a><br>
+	(<a href="{xen:link 'media', $media}">click here to watch and comment</a>)<br>
+
+	<xen:include template="EWRmedio_BBcode" />
+
+	{xen:phrase duration}: {xen:phrase x_minutes, 'count={$media.media_minutes}'} {xen:phrase x_seconds, 'time={$media.media_seconds}'}<br>
+	Uploaded on {xen:phrase date_x_at_time_y, 'date={xen:date $media.media_date}', 'time={xen:time $media.media_date}'} by <a href="{xen:link 'media/user', $media}">{$media.username}</a><br>
+	<a href="{xen:link 'media/category', $media}">{$media.category_name}</a> - <a href="{xen:link 'media/service', $media}">{$media.service_name}</a>
+
+	<xen:include template="bb_code_tag_quote">
+		<xen:map from="$media.media_description" to="$content" />
+	</xen:include>
+
+	<b>{xen:phrase media_keywords}</b>: {xen:raw $media.media_keywords}
+</div>]]></template>
+    <template title="EWRmedio_Bit" version_id="51" version_string="1.5.1"><![CDATA[<li>
+	<div class="secondaryContent">
+		<div style="position: relative;">
+			<div class="overlays" style="top: 5px; right: 5px;"><b><a href="{xen:link 'media/service', $subMedia}">{$subMedia.service_name}</a></b></div>
+			<div class="overlays" style="bottom: 8px; left: 5px; padding: 0px;">
+				<div class="oControl oComms"></div>
+				<div class="overlays oNumbs"><b>{$subMedia.media_comments}</b></div>
+				<div class="oControl oLikes"></div>
+				<div class="overlays oNumbs"><b>{$subMedia.media_likes}</b></div>
+				<div class="oControl oViews"></div>
+				<div class="overlays oNumbs"><b>{$subMedia.media_views}</b></div>
+			</div>
+
+			<xen:if is="{$subMedia.service_media} == 'gallery'">
+				<div class="overlays" style="top: 5px; left: 5px;"><b>{xen:phrase x_images, 'count={$subMedia.media_duration}'}</b></div>
+			<xen:else />
+				<div class="overlays" style="bottom: 8px; right: 5px;"><b><xen:if is="{$subMedia.media_hours}">{$subMedia.media_hours}:</xen:if>{$subMedia.media_minutes}:{$subMedia.media_seconds}</b></div>
+			</xen:if>
+
+			<a href="{xen:link 'media', $subMedia}"><img src="{xen:helper medio, $subMedia}" border="0" style="width: 100%;" alt="{$subMedia.media_title}" /></a>
+		</div>
+
+		<div style="height: 34px; overflow: hidden; margin-top: 10px;">
+			<a href="{xen:link 'media', $subMedia}"><b>{$subMedia.media_title}</b></a>
+		</div>
+
+		<div style="white-space: nowrap; overflow: hidden;">
+			{xen:phrase date_x_at_time_y, 'date={xen:date $subMedia.media_date}', 'time={xen:time $subMedia.media_date}'}<br />
+			{xen:phrase posted_by} <a href="{xen:link 'media/user', $subMedia}">{$subMedia.username}</a><br />
+			<a href="{xen:link 'media/category', $subMedia}">{$subMedia.category_name}</a>
+		</div>
+	</div>
+</li>]]></template>
+    <template title="EWRmedio_Bit_Comment" version_id="26" version_string="1.2.6"><![CDATA[<li id="{$comment.comment_id}" class="primaryContent messageSimple">
+	<xen:avatar user="$comment" size="s" />
+	
+	<div class="messageInfo">
+		<div class="messageContent">
+			<xen:if is="{$comment.userValid}">
+				<a href="{xen:link members, $comment}" class="poster username">{$comment.username}</a>
+			<xen:else />
+				<b>{$comment.username}</b>
+			</xen:if>
+			<article><blockquote class="ugc baseHtml">{xen:helper bodyText, $comment.comment_message}</blockquote></article>
+		</div>
+
+		<div class="messageMeta">
+			<div class="privateControls">
+				<span class="item muted"><xen:datetime time="$comment.comment_date" /></span>
+				<xen:if is="{$perms.mod}">
+					<a href="{xen:link 'media/comment/edit', $comment}" class="OverlayTrigger item">{xen:phrase edit}</a>
+					<a href="{xen:link 'media/comment/delete', $comment}" class="OverlayTrigger item">{xen:phrase delete}</a>
+					<a href="{xen:link 'media/comment/ip', $comment}" class="OverlayTrigger item">{xen:phrase ip}</a>
+				</xen:if>
+				<xen:if is="{$perms.report}">
+					<a href="{xen:link 'media/comment/report', $comment}" class="OverlayTrigger item">{xen:phrase report}</a>
+				</xen:if>
+			</div>
+		</div>
+	</div>
+</li>]]></template>
+    <template title="EWRmedio_Bit_Playlist" version_id="52" version_string="1.5.2"><![CDATA[<li>
+	<div class="secondaryContent">
+
+		<xen:if is="{$viewLast}">
+			<div class="lastPost">
+				<xen:if is="{xen:helper isIgnored, $subMedia.lastCommentInfo.user_id}">{xen:phrase ignored_member}<xen:else /><xen:username user="$subMedia.lastCommentInfo" /></xen:if><br />
+				<span class="muted"><a href="{xen:link media, $subMedia}" class="dateTime"><xen:datetime time="$subMedia.lastCommentInfo.post_date" title="{xen:phrase go_to_last_message}" /></a></span>
+			</div>
+		</xen:if>
+
+		<div class="views">
+			<b>{$subMedia.media_views}</b><br />
+			{xen:phrase views}
+		</div>
+
+		<xen:if is="{$subscribeOptions}">
+			<div class="subscribeOptions">
+				<input type="checkbox" name="media_ids[]" value="{$subMedia.media_id}" />
+			</div>
+		</xen:if>
+
+		<div class="thumb">
+			<div class="overlays" style="bottom: 8px; left: 5px; padding: 0px;">
+				<div class="oControl oComms"></div>
+				<div class="overlays oNumbs"><b>{$subMedia.media_comments}</b></div>
+				<div class="oControl oLikes"></div>
+				<div class="overlays oNumbs"><b>{$subMedia.media_likes}</b></div>
+			</div>
+
+			<xen:if is="{$subMedia.service_media} == 'gallery'">
+				<div class="overlays" style="top: 5px; left: 5px;"><b>{xen:phrase x_images, 'count={$subMedia.media_duration}'}</b></div>
+			<xen:else />
+				<div class="overlays" style="bottom: 8px; right: 5px;"><b><xen:if is="{$subMedia.media_hours}">{$subMedia.media_hours}:</xen:if>{$subMedia.media_minutes}:{$subMedia.media_seconds}</b></div>
+			</xen:if>
+			<a href="{xen:link 'media', $subMedia}{$playlist.playlist_id}"><img src="{xen:helper medio, $subMedia}" border="0" alt="{$subMedia.media_title}" /></a>
+		</div>
+
+		<div class="info">
+			<a href="{xen:link 'media', $subMedia}{$playlist.playlist_id}"><b>{$subMedia.media_title}</b></a><br />
+			<div class="muted">{xen:helper snippet, $subMedia.media_description, 200}</div>
+		</div>
+	</div>
+</li>]]></template>
+    <template title="EWRmedio_Bit_Playlists" version_id="51" version_string="1.5.1"><![CDATA[<li>
+	<div class="secondaryContent">
+		<div class="views">
+			<b>{$playlist.count}</b><br />
+			{xen:phrase videos}
+		</div>
+
+		<div class="thumb">
+			<a href="{xen:link 'media/playlist', $playlist}"><img src="{xen:helper medio, $playlist}" border="0" alt="{$playlist.playlist_name}" /></a>
+		</div>
+
+		<div class="info">
+			<a href="{xen:link 'media/playlist', $playlist}"><b>{$playlist.playlist_name}</b></a><br />
+			<div class="muted">
+				{xen:phrase playlist_by_x, 'user=<a href="{xen:link 'media/user', $playlist}">{$playlist.username}</a>'} &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+				{xen:phrase playlist_last_updated}: <xen:if is="{$playlist.playlist_date}">{xen:datetime $playlist.playlist_date}<xen:else />{xen:phrase never}</xen:if>
+			</div>
+		</div>
+	</div>
+</li>]]></template>
+    <template title="EWRmedio_Categories" version_id="26" version_string="1.2.6"><![CDATA[<xen:title>{xen:phrase categories}</xen:title>
+<xen:h1>{xen:phrase categories}</xen:h1>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">{xen:phrase categories}</div>
+
+	<xen:foreach loop="$catList" value="$list">
+		<div class="primaryContent">
+			<div style="white-space: nowrap; overflow: hidden;">
+				<a href="{xen:link 'media/category', $list}">{$list.category_name}</a> ({$list.count})
+				<span class="muted" style="font-size: 0.8em">{xen:helper snippet, $list.category_description, 150}</span>
+			</div>
+		</div>
+	</xen:foreach>
+</div>
+
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_CategoryAdmin" version_id="31" version_string="1.3.1"><![CDATA[<xen:title>{xen:phrase administrate_categories}</xen:title>
+<xen:h1>{xen:phrase administrate_categories}</xen:h1>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">{xen:phrase administrate_categories}</div>
+
+	<form action="{xen:link 'media/admin/categories'}" method="post">
+
+		<xen:foreach loop="$catList" value="$category">
+			<div class="primaryContent">
+				<div style="float: right; padding-top: 3px;">
+					(<a href="{xen:link 'media/category/edit', $category}">{xen:phrase edit}</a>)
+				</div>
+				<span style="padding-right: 5px;">
+					<input type="text" name="category_order[{$category.category_id}]" class="textCtrl" maxlenght="2" id="ctrl_order" value="{$category.category_order}" style="width: 30px;" />
+				</span>
+				<span style="display: inline-block; width: 180px;">
+					{xen:raw $category.category_indent}<a href="{xen:link 'media/category', $category}">{$category.category_name}</a>
+				</span>
+				<span class="muted" style="font-size: 0.8em">
+					{xen:helper snippet, $category.category_description, 120}
+				</span>
+			</div>
+		</xen:foreach>
+
+		<div class="secondaryContent">
+			<div style="float: right; padding-top: 3px;">
+				<a href="{xen:link 'media/category/create'}">{xen:phrase create_new_category}</a>
+			</div>
+			<input type="submit" value="{xen:phrase update_category_order}" name="submit" accesskey="s" class="button primary" />
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_CategoryCreate" version_id="36" version_string="1.3.6"><![CDATA[<xen:title>{xen:phrase create_new_category}</xen:title>
+<xen:h1>{xen:phrase create_new_category}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/admin/categories'}">{xen:phrase administrate_categories}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/category/create'}" method="post" class="xenForm">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}:</label></dt>
+				<dd><input type="text" name="category_name" class="textCtrl" id="ctrl_name" value="" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd>{xen:raw $editorTemplate}</dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="category_parent">{xen:phrase parent_node}:</label></dt>
+				<dd><select name="category_parent" id="ctrl_parent" class="textCtrl autoSize">
+					<option value="0">({xen:phrase unspecified})</option>
+					<xen:foreach loop="$catList" value="$list">
+						<option value="{$list.category_id}">&nbsp; &nbsp; {xen:raw $list.category_indent}{xen:raw $list.category_name}</option>
+					</xen:foreach>
+				</select></dd>
+			</dl>
+		</fieldset>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_category}" name="submit" accesskey="s" class="button primary" />
+			</dd>
+		</dl>
+
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt>{xen:phrase options}:</dt>
+				<dd><ul>
+					<li>
+						<label for="ctrl_disabled"><input type="checkbox" name="category_disabled" value="1" id="ctrl_disabled"> {xen:phrase disable_category}</label>
+						<p class="hint">{xen:phrase disable_category_hint}</p>
+					</li>
+				</ul></dd>
+			</dl>
+		</fieldset>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_CategoryDelete" version_id="36" version_string="1.3.6"><![CDATA[<xen:title>{xen:phrase delete_category}: {$category.category_name}</xen:title>
+
+<form action="{xen:link 'media/category/delete', $category}" method="post" class="xenForm formOverlay">
+
+	<dl class="ctrlUnit">
+		<dt>{xen:phrase delete_category}</dt>
+		<dd>
+			{$category.category_name}
+			<p class="explain">{xen:phrase delete_category_hint}</p>
+		</dd>
+		<br /><br /><br />
+		<dl class="ctrlUnit">
+			<dt><label for="ctrl_parent">{xen:phrase parent_node}:</label></dt>
+			<dd><select name="category_parent" id="ctrl_parent" class="textCtrl autoSize">
+				<option value="0">({xen:phrase unspecified})</option>
+				<xen:foreach loop="$catList" value="$list">
+					<option value="{$list.category_id}"
+						{xen:if '{$list.category_id}=={$category.category_parent}', 'selected'}
+						{xen:if '{$list.disabled}', 'disabled'}>
+						&nbsp; {xen:raw $list.category_indent}{xen:raw $list.category_name}
+					</option>
+				</xen:foreach>
+			</select></dd>
+		</dl>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase delete_category}" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_CategoryEdit" version_id="51" version_string="1.5.1"><![CDATA[<xen:title>{$category.category_name} - {xen:phrase edit}</xen:title>
+<xen:h1>{$category.category_name} - {xen:phrase edit}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/admin/categories'}">{xen:phrase administrate_categories}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:link 'full:media/category', $category}">{$category.category_name}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/category/edit', $category}" method="post" class="xenForm">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}:</label></dt>
+				<dd><input type="text" name="category_name" class="textCtrl" id="ctrl_name" value="{$category.category_name}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd>{xen:raw $editorTemplate}</dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_parent">{xen:phrase parent_node}:</label></dt>
+				<dd><select name="category_parent" id="ctrl_parent" class="textCtrl autoSize">
+					<option value="0">({xen:phrase unspecified})</option>
+					<xen:foreach loop="$catList" value="$list">
+						<option value="{$list.category_id}"
+							{xen:if '{$list.category_id}=={$category.category_parent}', 'selected'}
+							{xen:if '{$list.disabled}', 'disabled'}>
+							&nbsp; {xen:raw $list.category_indent}{xen:raw $list.category_name}
+						</option>
+					</xen:foreach>
+				</select></dd>
+			</dl>
+		</fieldset>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_category}" name="submit" accesskey="s" class="button primary" />
+				<a href="{xen:link 'media/category/delete', $category}" type="button" class="button OverlayTrigger">{xen:phrase delete_category}...</a>
+			</dd>
+		</dl>
+
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt>{xen:phrase options}:</dt>
+				<dd><ul>
+					<li>
+						<label for="ctrl_disabled"><input type="checkbox" name="category_disabled" value="1" id="ctrl_disabled" {xen:if '{$category.category_disabled}', 'checked'}> {xen:phrase disable_category}</label>
+						<p class="hint">{xen:phrase disable_category_hint}</p>
+					</li>
+				</ul></dd>
+			</dl>
+		</fieldset>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_CategoryView" version_id="35" version_string="1.3.5"><![CDATA[<xen:title>{$category.category_name}</xen:title>
+<xen:h1>{$category.category_name}</xen:h1>
+<xen:description>{xen:raw $category.HTML}</xen:description>
+
+<xen:container var="$head.rss">
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={xen:phrase media_library}'}" href="{xen:link 'full:media/rss'}" />
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={$category.category_name}'}" href="{xen:link 'full:media/category/rss', $category}" />
+</xen:container>
+
+<xen:navigation>
+	<xen:breadcrumb source="$breadCrumbs" />
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<xen:pagenav link="media/category" linkdata="{$category}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">
+		<div style="float: right;">
+			<xen:if is="{$perms.admin}">
+				(<a href="{xen:link 'media/category/edit', $category}">{xen:phrase edit}</a>)
+			</xen:if>
+		</div>
+		{$category.category_name}
+	</div>
+
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_category}</div>
+	</xen:if>
+</div>
+
+<xen:pagenav link="media/category" linkdata="{$category}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<xen:include template="EWRmedio_Submit_Small" />
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_CommentDelete" version_id="26" version_string="1.2.6"><![CDATA[<xen:title>{xen:phrase delete_comment_by_x, 'name={$comment.username}'}</xen:title>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<form action="{xen:link 'media/comment/delete', $comment}" method="post" class="xenForm formOverlay">
+
+	<xen:include template="helper_deletion_type_unit" />
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase delete_post}" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_CommentEdit" version_id="26" version_string="1.2.6"><![CDATA[<xen:title>{xen:phrase edit_comment_by_x, 'name={$comment.username}'}</xen:title>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<form action="{xen:link 'media/comment/edit', $comment}" method="post" class="xenForm formOverlay">
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_message">{xen:phrase message}:</label></dt>
+		<dd><textarea name="message" id="ctrl_message" class="textCtrl Elastic" rows="2">{$comment.comment_message}</textarea></dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd>
+			<input type="submit" value="{xen:phrase save_changes}" accesskey="s" class="button primary" />
+			<a href="{xen:link 'media/comment/delete', $comment}" class="button OverlayTrigger">{xen:phrase delete_post}...</a>
+		</dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_CommentIp" version_id="1" version_string="1.0.0"><![CDATA[<xen:title>{xen:phrase ip_information_for_comment, 'user={$comment.username}'}</xen:title>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<div class="section">
+	<h3 class="subHeading">{xen:phrase media}: {$media.media_title}</h3>
+	<xen:include template="content_ip">
+		<xen:map from="$comment" to="$content" />
+	</xen:include>
+</div>]]></template>
+    <template title="EWRmedio_CommentReport" version_id="26" version_string="1.2.6"><![CDATA[<xen:title>{$media.media_title} - {xen:phrase report_comment}</xen:title>
+<xen:h1>{xen:phrase report_comment}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<form action="{xen:link 'media/comment/report', $comment}" method="post" class="xenForm formOverlay AutoValidator">
+
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_message">{xen:phrase report_reason}:</label></dt>
+		<dd><textarea name="message" id="ctrl_message" rows="2" class="textCtrl Elastic"></textarea></dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase report_comment}" accesskey="s" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_Custom_Options" version_id="53" version_string="1.5.3"><![CDATA[<xen:if is="{$custom.type} == 'textbox'">
+	<dl class="ctrlUnit">
+		<dt><label for="{$ctrl}">{$custom.name}:</label></dt>
+		<dd><input type="text" name="{$name}[]" class="textCtrl" id="{$ctrl}" value="{$custom.value}" /></dd>
+	</dl>
+<xen:elseif is="{$custom.type} == 'spinbox'" />
+	<dl class="ctrlUnit">
+		<dt><label for="{$ctrl}">{$custom.name}:</label></dt>
+		<dd><input type="text" size="1" name="{$name}[]" value="{$custom.value}" class="textCtrl autoSize SpinBox"
+			id="{$ctrl}" step="{$custom.params.step}" min="{$custom.params.min}" max="{$custom.params.max}" /></dd>
+	</dl>
+<xen:elseif is="{$custom.type} == 'onoff'" />
+	<dl class="ctrlUnit">
+		<dt></dt>
+		<dd><label for="{$ctrl}"><input type="checkbox" name="{$name}[]" value="1" id="{$ctrl}"
+			{xen:checked "{$custom.value}"} /> {$custom.name}</label></dd>
+	</dl>
+<xen:elseif is="{$custom.type} == 'radio'" />
+	<dl class="ctrlUnit">
+		<dt>{$custom.name}:</dt>
+		<dd><label for="ctrl_unspecified"><input type="radio" name="{$name}[]" value="" id="ctrl_unspecified" /> ({xen:phrase unspecified})</label><br />
+			<xen:foreach loop="$custom.params" value="$radio">
+				<label for="ctrl_{$radio.id}"><input type="radio" name="{$name}[]" value="{$radio.id}" id="ctrl_{$radio.id}"
+					{xen:checked "{$radio.id} == {$custom.value}"} /> {$radio.val}</label><br />
+			</xen:foreach></dd>
+	</dl>
+<xen:elseif is="{$custom.type} == 'select'" />
+	<dl class="ctrlUnit">
+		<dt><label for="{$ctrl}">{$custom.name}:</label></dt>
+		<dd><select name="{$name}[]" id="{$ctrl}" class="textCtrl autoSize">
+			<option value="">({xen:phrase unspecified})</option>{$custom.value}
+			<xen:foreach loop="$custom.params" value="$select">
+				<option value="{$select.id}" {xen:selected "{$custom.value} == {$select.id}"}>{$select.val}</option>
+			</xen:foreach>
+		</select></dd>
+	</dl>
+<xen:elseif is="{$custom.type} == 'checkbox'" />
+	<dl class="ctrlUnit">
+		<dt>{$custom.name}:</dt>
+		<dd><xen:foreach loop="$custom.params" value="$check">
+			<label for="ctrl_{$check.id}"><input type="checkbox" name="{$name}[]" value="{$check.id}" id="ctrl_{$check.id}"
+				{xen:checked "{$check.checked}"} /> {$check.val}</label><br />
+		</xen:foreach></dd>
+	</dl>
+</xen:if>]]></template>
+    <template title="EWRmedio_Embed" version_id="51" version_string="1.5.1"><![CDATA[<div style="text-align: center;">
+<div id="embed_player">
+	<xen:if is="{$media.service_movie}">
+		<object type="application/x-shockwave-flash" width="{$media.service_width}" height="{$media.service_height}" data="{$media.service_movie}">
+			<param name="movie" value="{$media.service_movie}" />
+			<param name="allowfullscreen" value="true" />
+			<param name="allowscriptaccess" value="true" />
+			<param name="wmode" value="transparent" />
+			<param name="flashvars" value="{$media.service_flashvars}" />
+			{xen:raw $media.service_parameters}
+		</object>
+	<xen:else />
+		{xen:raw $media.service_parameters}
+	</xen:if>
+</div>
+</div>]]></template>
+    <template title="EWRmedio_Footer" version_id="51" version_string="1.5.1"><![CDATA[<div class="medioCopy copyright muted">
+	<a href="http://xenforo.com/community/resources/97/">XenMedio</a>
+	&copy; Jason Axelrod from <a href="http://8wayrun.com/">8WAYRUN.COM</a>
+</div>]]></template>
+    <template title="EWRmedio_KeywordAdmin" version_id="36" version_string="1.3.6"><![CDATA[<xen:title>{xen:phrase administrate_keywords}</xen:title>
+<xen:h1>{xen:phrase administrate_keywords}</xen:h1>
+
+<xen:require css="EWRmedio.css" />
+<xen:require js="js/8wayrun/slugit.js" />
+<xen:require js="js/8wayrun/EWRmedio_ajax.js" />
+
+<div class="sectionMain adminKeywords">
+	<div class="subHeading">{xen:phrase administrate_keywords}</div>
+
+	<form action="{xen:link 'media/admin/keywords'}" method="post">
+
+		<div class="primaryContent">
+			<ul>
+			<xen:foreach loop="$keyList" value="$keyword">
+				<li>
+					<div style="float: right; padding-right: 5px;" />
+						(<a href="{xen:link 'media/keyword', $keyword}"><b>{$keyword.count}</b></a>)
+					</div>
+					<label for="ctrl_keywords[{$keyword.keyword_id}]">
+						<input type="checkbox" name="keywords[{$keyword.keyword_id}]" value="{$keyword.keyword_id}" id="ctrl_keywords[{$keyword.keyword_id}]">
+						{$keyword.keyword_text}
+					</label>
+				</li>
+			</xen:foreach>
+			</ul>
+
+		</div>
+
+		<div class="secondaryContent">
+			<div style="float: right;" />
+				<input type="submit" value="{xen:phrase delete_keywords}" name="submit" class="button primary" />
+			</div>
+			<xen:pagenav link="media/admin/keywords" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+			<div style="clear: both;"></div>
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<div class="sectionMain">
+	<div class="subHeading">{xen:phrase create_new_keywords}</div>
+
+	<form action="{xen:link 'media/keyword/create'}" method="post" class="xenForm">
+		<dl class="ctrlUnit">
+			<dt><label for="ctrl_keywords">{xen:phrase media_keywords}:</label></dt>
+			<dd><input type="text" name="media_keywords" class="textCtrl KeywordEdit" id="ctrl_keywords" value="" />
+				<li><p class="hint">{xen:phrase media_keyword_hint}</p></li>
+			</dd>
+		</dl>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_keywords}" name="submit" accesskey="s" class="button primary" />
+			</dd>
+		</dl>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_KeywordView" version_id="35" version_string="1.3.5"><![CDATA[<xen:title>{$keyword.keyword_text}</xen:title>
+<xen:h1>{$keyword.keyword_text}</xen:h1>
+<xen:description>{xen:phrase media_tagged_with_x, 'keyword={$keyword.keyword_text}'}</xen:description>
+
+<xen:container var="$head.rss">
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={xen:phrase media_library}'}" href="{xen:link 'full:media/rss'}" />
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={$keyword.keyword_text}'}" href="{xen:link 'full:media/keyword/rss', $keyword}" />
+</xen:container>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/keyword'}">{xen:phrase media_keywords}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<xen:pagenav link="media/keyword" linkdata="{$keyword}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">
+		{$keyword.keyword_text}
+	</div>
+
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_category}</div>
+	</xen:if>
+</div>
+
+<xen:pagenav link="media/keyword" linkdata="{$keyword}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<xen:include template="EWRmedio_Submit_Small" />
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_Media" version_id="25" version_string="1.2.5"><![CDATA[<xen:title>{xen:phrase media_library}</xen:title>
+<xen:h1>{xen:phrase media_library}</xen:h1>
+
+<xen:container var="$head.rss">
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={xen:phrase media_library}'}" href="{xen:link 'full:media/rss'}" />
+</xen:container>
+
+<xen:require css="EWRmedio.css" />
+
+<xen:if hascontent="true">
+<div class="sectionMain mediaList">
+	<div class="subHeading">{xen:phrase recent_media}</div>
+
+	<ul>
+	<xen:contentcheck>
+	<xen:foreach loop="$recentMedia" value="$subMedia">
+		<xen:include template="EWRmedio_Bit" />
+	</xen:foreach>
+	</xen:contentcheck>
+	</ul>
+</div>
+</xen:if>
+
+<xen:if hascontent="true">
+<div class="sectionMain mediaList">
+	<div class="subHeading">{xen:phrase popular_media}</div>
+
+	<ul>
+	<xen:contentcheck>
+	<xen:foreach loop="$popularMedia" value="$subMedia">
+		<xen:include template="EWRmedio_Bit" />
+	</xen:foreach>
+	</xen:contentcheck>
+	</ul>
+</div>
+</xen:if>
+
+
+<xen:include template="EWRmedio_Submit_Small" />
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_MediaComments" version_id="36" version_string="1.3.6"><![CDATA[<xen:require css="message_simple.css" />
+<xen:require js="js/8wayrun/EWRmedio_ajax.js" />
+
+<div id="mediaComments">
+	<xen:if is="{$count} > {$stop}">
+	<div class="pageNavLinkGroup primaryContent" style="margin-top: 0px;" id="CommentFeed">
+		<div class="linkGroup SelectionCountContainer"></div>
+		<xen:pagenav link="media/comments" linkdata="{$media}" page="{$start}" perpage="{$stop}" total="{$count}" />
+	</div>
+	</xen:if>
+
+	<xen:if is="{$comments}">
+	<ol class="messageSimpleList">
+		<xen:foreach loop="$comments" value="$comment">
+			<xen:include template="EWRmedio_Bit_Comment" />
+		</xen:foreach>
+	</ol>
+	</xen:if>
+</div>]]></template>
+    <template title="EWRmedio_MediaDelete" version_id="36" version_string="1.3.6"><![CDATA[<xen:title>{xen:phrase delete_media}: {$media.media_title}</xen:title>
+
+<form action="{xen:link 'media/delete', $media}" method="post" class="xenForm formOverlay">
+
+	<dl class="ctrlUnit">
+		<dt>{xen:phrase delete_media}</dt>
+		<dd>
+			{$media.media_title}
+			<p class="explain">{xen:phrase delete_media_hint}</p>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase delete_media}" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_MediaEdit" version_id="53" version_string="1.5.3"><![CDATA[<xen:title>{$media.media_title} - {xen:phrase edit}</xen:title>
+<xen:h1>{$media.media_title} - {xen:phrase edit}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb source="$breadCrumbs" />
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+<xen:require js="js/8wayrun/slugit.js" />
+<xen:require js="js/8wayrun/EWRmedio_ajax.js" />
+
+<xen:if is="{$perms.alter}">
+	<div class="sectionMain">
+		<form action="{xen:link 'media/alter', $media}" method="post" class="xenForm AutoValidator" data-redirect="true" style="text-align: center; width: auto;">
+			<b>{xen:phrase service}:</b>
+				<select name="service_id" id="ctrl_category" class="textCtrl autoSize">
+					<xen:foreach loop="$services" value="$service">
+						<option value="{$service.service_id}" {xen:if '{$service.service_id}=={$media.service_id}', 'selected'}>{$service.service_name}</option>
+					</xen:foreach>
+				</select> &nbsp;
+			<b>{xen:phrase serviceval}:</b>
+				<input type="text" name="service_value" class="textCtrl" value="{$media.service_value}" style="width: 100px;" /> &nbsp;
+			<b>{xen:phrase serviceval2}:</b>
+				<input type="text" name="service_value2" class="textCtrl" value="{$media.service_value2}" style="width: 100px;" /> &nbsp;
+			<input type="submit" value="{xen:phrase save_media}" name="submit" accesskey="s" class="button primary" />
+			<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+		</form>
+	</div>
+</xen:if>
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/edit', $media}" method="post" class="xenForm AutoValidator" data-redirect="true">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}:</label></dt>
+				<dd><input type="text" name="media_title" class="textCtrl" id="ctrl_title" value="{$media.media_title}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_category">{xen:phrase category}:</label></dt>
+				<dd><select name="category_id" id="ctrl_category" class="textCtrl autoSize">
+					<option value="0">({xen:phrase unspecified})</option>
+					<xen:foreach loop="$fullList" value="$list">
+						<option value="{$list.category_id}"
+						{xen:if '{$list.category_id}=={$media.category_id}', 'selected'}
+						{xen:if '{$list.category_disabled}', 'disabled'}>
+						&nbsp; &nbsp; {xen:raw $list.category_indent}{xen:raw $list.category_name}
+						</option>
+					</xen:foreach>
+				</select></dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd>{xen:raw $editorTemplate}</dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_seconds">{xen:phrase duration}:</label></dt>
+				<dd>
+					<xen:if is="{$media.service_media} == 'gallery'">
+						<input type="text" name="media_seconds" class="textCtrl" maxlength="5" id="ctrl_seconds" value="{$media.media_duration}" style="width: 40px; text-align: right;" />&nbsp; {xen:phrase x_images, 'count='}
+					<xen:else />
+						<input type="text" name="media_hours" class="textCtrl" maxlength="2" id="ctrl_hours" value="{$media.media_hours}" style="width: 18px; text-align: right;" />&nbsp; {xen:phrase x_hours, 'count='} &nbsp;
+						<input type="text" name="media_minutes" class="textCtrl" maxlength="2" id="ctrl_minutes" value="{$media.media_minutes}" style="width: 18px; text-align: right;" />&nbsp; {xen:phrase x_minutes, 'count='} &nbsp;
+						<input type="text" name="media_seconds" class="textCtrl" maxlength="2" id="ctrl_seconds" value="{$media.media_seconds}" style="width: 18px; text-align: right;" />&nbsp; {xen:phrase x_seconds, 'time='}
+					</xen:if>
+				</dd>
+			</dl>
+		</fieldset>
+
+		<xen:if hascontent="true">
+		<fieldset>
+			<xen:contentcheck>
+			<xen:foreach loop="$customs" key="$customID" value="$custom">
+				<xen:include template="EWRmedio_Custom_Options">
+					<xen:set var="$ctrl">ctrl_{$customID}</xen:set>
+					<xen:set var="$name">media_{$customID}</xen:set>
+				</xen:include>
+			</xen:foreach>
+			</xen:contentcheck>			
+		</fieldset>
+		</xen:if>
+
+		<fieldset>
+			<xen:if hascontent="true">
+			<dl class="ctrlUnit fullWidth mediaKeywords">
+				<dt></dt>
+				<dd>
+					<ul>
+					<xen:contentcheck>
+					<xen:foreach loop="$keylinks" value="$keylink">
+						<li>
+							<label for="ctrl_keylinks[{$keylink.keylink_id}]">
+								<input type="checkbox" name="media_keylinks[{$keylink.keylink_id}]" value="{$keylink.keyword_text}" id="ctrl_keylinks[{$keylink.keylink_id}]" checked="checked">
+								<input type="hidden" name="media_oldlinks[{$keylink.keylink_id}]" value="{$keylink.keyword_text}">
+								{$keylink.keyword_text}
+							</label>
+						</li>
+					</xen:foreach>
+					</xen:contentcheck>
+					</ul>
+				</dd>
+			</dl>
+			</xen:if>
+
+			<xen:if is="{$xenOptions.EWRmedio_newkeywords}">
+				<dl class="ctrlUnit">
+					<dt><label for="ctrl_keywords">{xen:phrase media_keywords}:</label></dt>
+					<dd><input type="text" name="media_keywords" class="textCtrl KeywordEdit" id="ctrl_keywords" value="" />
+						<li><p class="hint">{xen:phrase media_keyword_hint}</p></li>
+					</dd>
+				</dl>
+			<xen:else />
+				<xen:if hascontent="true">
+				<dl class="ctrlUnit fullWidth mediaKeywords">
+					<dt></dt>
+					<dd>
+						<ul>
+						<xen:contentcheck>
+						<xen:foreach loop="$keywords" value="$keyword">
+							<li>
+								<label for="ctrl_keyarray[{$keyword.keyword_id}]">
+									<input type="checkbox" name="media_keyarray[{$keyword.keyword_id}]" value="{$keyword.keyword_text}" id="ctrl_keyarray[{$keyword.keyword_id}]">
+									{$keyword.keyword_text}
+								</label>
+							</li>
+						</xen:foreach>
+						</xen:contentcheck>
+						</ul>
+					</dd>
+				</dl>
+				</xen:if>
+				<input type="hidden" name="media_keywords" id="ctrl_keywords" value=""  />
+			</xen:if>
+		</fieldset>
+
+		<xen:include template="helper_captcha_unit" />
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_media}" name="submit" accesskey="s" class="button primary" />
+				<a href="{xen:link 'media/delete', $media}" type="button" class="button OverlayTrigger">{xen:phrase delete_media}...</a>
+			</dd>
+		</dl>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/thumb', $media}" method="post" class="xenForm" enctype="multipart/form-data">
+		<dl class="ctrlUnit">
+			<dt><img src="{xen:helper medio, $media}" border="0" alt="{$media.media_title}" /></dt>
+			<dd><br /><input type="file" name="upload_file" class="textCtrl" /><br />
+			<br /><input type="submit" value="{xen:phrase upload_new_thumbnail}" name="submit" accesskey="s" class="button primary" /></dd>
+		</dl>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_MediaLike" version_id="25" version_string="1.2.5"><![CDATA[<xen:title>{$media.media_title} - {xen:if $like, '{xen:phrase unlike_media}', '{xen:phrase like_media}'}</xen:title>
+
+<xen:navigation>
+	<xen:breadcrumb source="$breadCrumbs" />
+</xen:navigation>
+
+<form action="{xen:link 'media/like', $media}" method="post" class="xenForm">
+
+	<dl class="ctrlUnit fullWidth">
+		<dt></dt>
+		<dd>
+			<xen:if is="{$like}">
+				{xen:phrase you_sure_you_want_to_unlike_this_media}
+			<xen:else />
+				{xen:phrase you_sure_you_want_to_like_this_media}
+			</xen:if>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:if $like, '{xen:phrase unlike_media}', '{xen:phrase like_media}'}" accesskey="s" class="button primary" autofocus="true" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_MediaLikes" version_id="25" version_string="1.2.5"><![CDATA[<xen:title>{$media.media_title} - {xen:phrase members_who_liked_this_media}</xen:title>
+<xen:h1>{xen:phrase members_who_liked_this_media}</xen:h1>
+
+<xen:container var="$head.noindex">
+	<meta name="robots" content="noindex" /></xen:container>
+
+<xen:navigation>
+	<xen:breadcrumb source="$breadCrumbs" />
+	<xen:breadcrumb href="{xen:link full:media, $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<div class="section">
+	<dl class="subHeading pairsInline"><dt>{xen:phrase media}:</dt> <dd><a href="{xen:link media, $media}">{$media.media_title}</a></dd></dl>
+	<ol class="overlayScroll">
+	<xen:foreach loop="$likes" value="$like">
+		<xen:include template="member_list_item">
+			<xen:set var="$extraTemplate"><xen:datetime time="$like.like_date" /></xen:set>
+			<xen:map from="$like" to="$user" />
+		</xen:include>
+	</xen:foreach>
+	</ol>
+	<div class="sectionFooter overlayOnly"><a class="button primary OverlayCloser">{xen:phrase close}</a></div>
+</div>]]></template>
+    <template title="EWRmedio_MediaPopout" version_id="20" version_string="1.2.0"><![CDATA[<xen:title>{$media.media_title}</xen:title>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<div class="section">
+	<div style="background-color: #000000; padding: 5px;">
+		<xen:include template="EWRmedio_Embed" />
+	</div>
+
+	<h3 class="subHeading"><a href="{xen:link 'media', $media}">{xen:phrase click_here_to_view_the_media_x, 'media={$media.media_title}'}</a></h3>
+</div>]]></template>
+    <template title="EWRmedio_MediaReport" version_id="26" version_string="1.2.6"><![CDATA[<xen:title>{$media.media_title} - {xen:phrase report_media}</xen:title>
+<xen:h1>{xen:phrase report_media}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<form action="{xen:link 'media/report', $media}" method="post" class="xenForm formOverlay AutoValidator">
+
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_message">{xen:phrase report_reason}:</label></dt>
+		<dd><textarea name="message" id="ctrl_message" rows="2" class="textCtrl Elastic"></textarea></dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase report_media}" accesskey="s" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_MediaView" version_id="52" version_string="1.5.2"><![CDATA[<xen:title>{$media.media_title}</xen:title>
+<xen:h1>{$media.media_title}</xen:h1>
+
+<xen:container var="$head.media">
+	<link rel="canonical" href="{xen:link 'canonical:media', $media}" />
+	<link rel="image_src" href="{xen:helper medio, $media}" />
+	<meta name="title" content="{$media.media_title}" />
+	<meta name="description" content="{$media.TEXT}" />
+	<meta name="keywords" content="{$media.media_keywords}" />
+
+	<meta property="og:url" content="{xen:link 'canonical:media', $media}" />
+	<meta property="og:image" content="{xen:helper medio, $media}" />
+	<meta property="og:title" content="{$media.media_title}" />
+	<meta property="og:description" content="{$media.TEXT}" />
+	<meta property="og:keywords" content="{$media.media_keywords}" />
+</xen:container>
+
+<xen:navigation>
+	<xen:breadcrumb source="$breadCrumbs" />
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+
+<xen:if is="{$media.media_state} == 'moderated'"><p class="importantMessage">{xen:phrase media_in_moderation_queue}</p></xen:if>
+
+<div class="sectionMain">
+	<div class="subHeading">
+		<div style="float: right;">
+			<xen:if is="{$visitor.user_id}">
+				(<a href="{xen:link 'media/watch-confirm', $media}" class="OverlayTrigger" data-cacheOverlay="false">{xen:if $media.media_is_watched, '{xen:phrase unwatch_media}', '{xen:phrase watch_media}'}</a>)
+			</xen:if>
+			<xen:if is="{$perms.like} && {$media.user_id} !== {$visitor.user_id}">
+				(<a href="{xen:link 'media/like', $media}" class="LikeLink item control {xen:if $media.like_date, unlike, like}" data-container="#likes-media-{$media.media_id}"><span></span><span class="LikeLabel">{xen:if $media.like_date, {xen:phrase unlike}, {xen:phrase like}}</span></a>)
+			</xen:if>
+			<xen:if is="{$perms.report} && {$media.user_id} !== {$visitor.user_id}">
+				(<a href="{xen:link 'media/report', $media}" class="OverlayTrigger item">{xen:phrase report}</a>)
+			</xen:if>
+			<xen:if is="{$perms.mod} || {$media.user_id} === {$visitor.user_id}">
+				(<a href="{xen:link 'media/edit', $media}">{xen:phrase edit}</a>)
+			</xen:if>
+		</div>
+		{$media.media_title}
+	</div>
+
+	<div class="secondaryContent">
+		<xen:include template="EWRmedio_Embed" />
+	</div>
+
+	<div id="likes-media-{$media.media_id}">
+		<xen:if is="{$media.media_likes}">
+			<xen:include template="likes_summary">
+				<xen:map from="$media" to="$message" />
+				<xen:set var="$likesUrl">{xen:link media/likes, $media}</xen:set>
+			</xen:include>
+		</xen:if>
+	</div>
+</div>
+
+<xen:if is="{$perms.comment} || {$comments}">
+<div class="sectionMain">
+	<xen:if is="{$perms.comment}">
+	<form action="{xen:link 'media/post-comment', $media}" method="post" style="margin: 0px;" class="messageSimple primaryContent AutoValidator" id="CommentPoster">
+		<xen:avatar user="$visitor" size="s" />
+		<div class="messageInfo">
+			<xen:if is="!{$visitor.user_id}"><input type="text" name="username" class="textCtrl" placeholder="{xen:phrase guest}..." /></xen:if>
+			<textarea name="message" class="textCtrl Elastic OptOut" placeholder="{xen:phrase post_comment}..." rows="3" cols="50"></textarea>
+			<div style="margin-top: 8px; float: left;" id="CommentStatus"></div>
+			<div class="submitUnit">
+				<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+				<input type="submit" class="button primary" value="{xen:phrase post}" accesskey="s" />
+			</div>
+		</div>
+	</form>
+	</xen:if>
+
+	<xen:include template="EWRmedio_MediaComments" />
+</div>
+</xen:if>
+
+<xen:include template="EWRmedio_MediaView_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_MediaView_Sidebar" version_id="53" version_string="1.5.3"><![CDATA[<xen:sidebar>
+
+	<xen:if is="{$playlist}">
+	<div class="section" id="Playlist">
+
+		<div class="secondaryContent mediaSmall">
+			<h3>{xen:phrase playlist_details}</h3>
+
+			<div style="font-size: 1.3em; margin-bottom: 10px; text-align: center;">
+				<b><a href="{xen:link 'media/playlist', $playlist}">{$playlist.playlist_name}</a></b>
+			</div>
+
+			<ul>
+			<xen:if is="{$playlist.prev}">
+				<li>
+					<div class="mediaContent">
+						<div style="position: relative;" title="{$playlist.prev.media_title}">
+							<div class="overlays" style="bottom: 7px; right: 5px;"><b>{$playlist.prev.media_minutes}:{$playlist.prev.media_seconds}</b></div>
+							<a href="{xen:link 'media', $playlist.prev}{$playlist.playlist_id}"><img src="{xen:helper medio, $playlist.prev}" border="0" style="width: 100%;" alt="{$playlist.prev.media_title}" /></a>
+						</div>
+						<b>&laquo; {xen:phrase previous}</b>
+					</div>
+				</li>
+			<xen:else />
+				<li><div class="mediaContent">
+					<img src="styles/8wayrun/media_blank.png" border="0" style="width: 100%;" alt="" /><br />
+					<span class="muted"><b>&laquo; {xen:phrase previous}</b></span>
+				</div></li>
+			</xen:if>
+
+			<xen:if is="{$playlist.next}">
+				<li>
+					<div class="mediaContent">
+						<div style="position: relative;" title="{$playlist.next.media_title}">
+							<div class="overlays" style="bottom: 7px; right: 5px;"><b>{$playlist.next.media_minutes}:{$playlist.next.media_seconds}</b></div>
+							<a href="{xen:link 'media', $playlist.next}{$playlist.playlist_id}"><img src="{xen:helper medio, $playlist.next}" border="0" style="width: 100%;" alt="{$playlist.next.media_title}" /></a>
+						</div>
+						<b>{xen:phrase next} &raquo;</b>
+					</div>
+				</li>
+			<xen:else />
+				<li><div class="mediaContent">
+					<img src="styles/8wayrun/media_blank.png" border="0" style="width: 100%;" alt="" /><br />
+					<span class="muted"><b>{xen:phrase next} &raquo;</b></span>
+				</div></li>
+			</xen:if>
+			</ul>
+
+			<xen:if is="{$playlist.next} && {$playlist.next.service_slug} == 'youtube'">
+				<div style="margin-top: 5px; text-align: center;">
+					<label for="ctrl_autoplay">
+						<input type="checkbox" name="autoplay" value="1" id="ctrl_autoplay" CHECKED>
+						<span style="font-size: 1.1em;">{xen:phrase autoplay_next_item_in_playlist}</span>
+						<p class="muted">{xen:phrase only_supported_by_x, 'services=YouTube'}</p>
+					</label>
+				</div>
+
+				<script language="javascript">
+				  var tag = document.createElement('script');
+				  tag.src = "//www.youtube.com/iframe_api";
+				  var firstScriptTag = document.getElementsByTagName('script')[0];
+				  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+				  function onYouTubeIframeAPIReady() {
+					new YT.Player('ytplayer', {
+					  events: {
+					  'onStateChange': onPlayerStateChange
+					  }
+					});
+				  }
+
+				  function onPlayerStateChange(event) {
+					if (event.data == YT.PlayerState.ENDED && document.getElementById('ctrl_autoplay').checked) {
+					  window.location="{xen:link 'media', $playlist.next}{$playlist.playlist_id}";
+					}
+				  }
+				</script>
+			</xen:if>
+		</div>
+	</div>
+	</xen:if>
+
+	<div class="section mediaDetails" id="Details">
+		<div class="secondaryContent">
+			<h3>
+				{xen:phrase media_details}
+				<div style="float: right;">
+					<xen:if is="{$perms.mod} || {$media.user_id} === {$visitor.user_id}">
+						(<a href="{xen:link 'media/edit', $media}">{xen:phrase edit}</a>)
+					</xen:if>
+				</div>
+			</h3>
+
+			<div style="text-align: center;">
+				<span style="font-size: 1.4em"><b>{xen:phrase date_x_at_time_y, 'date={xen:date $media.media_date}', 'time={xen:time $media.media_date}'}</b></span><br />
+				{xen:phrase posted_by} <a href="{xen:link 'media/user', $media}">{$media.username}</a><br />
+				<br />
+				{xen:raw $media.HTML}<br />
+				<br />
+
+				<xen:if hascontent="true">
+					<div class="pairsJustified" style="margin-left: 30px; margin-right: 30px;">
+						<xen:contentcheck>
+						<xen:foreach loop="$customs" value="$custom">
+							<dl>
+								<dt>{$custom.name}:</dt>
+								<dd>{$custom.value}</dd>
+							</dl>
+						</xen:foreach>
+						</xen:contentcheck>
+					</div>
+					<br />
+				</xen:if>
+
+				<xen:if hascontent="true">
+					<span style="font-size: 1.4em"><b>{xen:phrase media_keywords}</b></span><br />
+					<ul>
+						<xen:contentcheck>
+						<xen:foreach loop="$keywords" value="$keyword">
+							<li><a href="{xen:link 'media/keyword', $keyword}">{$keyword.keyword_text}</a></li>
+						</xen:foreach>
+						</xen:contentcheck>
+					</ul>
+					<br />
+				</xen:if>
+
+				<span style="font-size: 1.4em"><b><a href="{xen:link 'media/category', $media}">{$media.category_name}</a></b></span><br />
+				{xen:phrase comments}: {$media.media_comments} - {xen:phrase likes}: {$media.media_likes} - {xen:phrase views}: {$media.media_views}<br />
+				<br />
+
+				<input type="text" name="media_url" value="{xen:link 'full:media', $media}" readonly="readonly" class="textCtrl" style="width: 200px;" onclick="this.focus(); this.select()" /><br />
+				<input type="text" name="bbcode" value="[medio]{$media.media_id}[/medio]" readonly="readonly" class="textCtrl" style="width: 200px;" onclick="this.focus(); this.select()" />
+			</div>
+		</div>
+	</div>
+
+	<xen:if is="{$perms.playlist}">
+	<div class="section" id="Playlists">
+		<div class="secondaryContent">
+			<h3>{xen:phrase add_to_playlist}</h3>
+
+			<form action="{xen:link 'media/playlist/addto'}" method="post" style="text-align: center;">
+				<select name="playlist_id" id="ctrl_playlist" class="textCtrl autoSize" style="margin-bottom: 10px;">
+					<option value="0">({xen:phrase create_new_playlist})</option>
+					<xen:if is="{$playlistList}">
+						<xen:foreach loop="$playlistList" value="$list">
+							<option value="{$list.playlist_id}">{xen:raw $list.playlist_name}</option>
+						</xen:foreach>
+					</xen:if>
+				</select>
+
+				<input type="submit" value="{xen:phrase add_to_playlist}" name="submit" accesskey="s" class="button primary" />
+
+				<input type="hidden" name="media_id" value="{$media.media_id}" />
+				<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+			</form>
+		</div>
+	</div>
+	</xen:if>
+
+	<xen:include template="sidebar_share_page">
+		<xen:set var="$url">{xen:link canonical:media, $media}</xen:set>
+	</xen:include>
+
+</xen:sidebar>]]></template>
+    <template title="EWRmedio_MediaWatch" version_id="52" version_string="1.5.2"><![CDATA[<xen:if is="{$mediaWatch}">
+	<xen:title>{xen:phrase stop_watching_this_media}</xen:title>
+<xen:else />
+	<xen:title>{xen:phrase watch_this_media}</xen:title>
+</xen:if>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media', $media}">{$media.media_title}</xen:breadcrumb>
+</xen:navigation>
+
+<form action="{xen:link 'media/watch', $media}" method="post" class="xenForm formOverlay AutoValidator">
+
+	<xen:if is="{$mediaWatch}">
+		<p>{xen:phrase you_are_watching_this_media_use_button_to_stop}</p>
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="hidden" name="stop" value="stop" />
+				<input type="submit" value="{xen:phrase stop_watching}" class="button primary" />
+			</dd>
+		</dl>
+	<xen:else />
+		<dl class="ctrlUnit">
+			<dt><label>{xen:phrase watch_this_media_sentence}...</label></dt>
+			<dd>
+				<ul>
+					<li>
+						<label for="ctrl_email_subscribe_1">
+							<input type="radio" name="email_subscribe" value="1" id="ctrl_email_subscribe_1" />
+							{xen:phrase and_receive_email_notifications}
+						</label>
+					</li>
+					<li>
+						<label for="ctrl_email_subscribe_0">
+							<input type="radio" name="email_subscribe" value="0" id="ctrl_email_subscribe_0" checked="checked" autofocus="true" />
+							 {xen:phrase without_receiving_email_notifications}
+						</label>
+					</li>
+				</ul>
+			</dd>
+		</dl>
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase watch_media_button}" class="button primary" />
+			</dd>
+		</dl>
+	</xen:if>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_Navtabs" version_id="51" version_string="1.5.1"><![CDATA[<ul class="secondaryContent blockLinksList">
+	<li><a href="{xen:link 'media/categories'}">{xen:phrase categories}</a></li>
+	<li><a href="{xen:link 'media/playlists'}">{xen:phrase playlists}</a></li>
+	<xen:if is="{$perms.view}">
+		<li><a href="{xen:link 'media/random'}">{xen:phrase random_media}</a></li>
+	</xen:if>
+	<xen:if is="{$perms.submit}">
+		<li><a href="{xen:link 'media/submit'}">{xen:phrase submit_media}</a></li>
+	</xen:if>
+	<xen:if is="{$perms.admin} && {$media}">
+		<li style="width: 50px; height: 10px;"></li>
+		<li><div class="Popup">
+			<a rel="Menu">{xen:phrase administrate_media}</a>
+
+			<div class="Menu">
+				<div class="primaryContent menuHeader"><h3>{xen:phrase administrate_media}</h3></div>
+				<ul class="secondaryContent blockLinksList">
+					<li><a href="{xen:link 'media/admin/categories'}">{xen:phrase categories}</a></li>
+					<li><a href="{xen:link 'media/admin/keywords'}">{xen:phrase media_keywords}</a></li>
+					<li><a href="{xen:link 'media/admin/services'}">{xen:phrase services}</a></li>
+				</ul>
+			</div>
+		</div></li>
+	</xen:if>
+</ul>]]></template>
+    <template title="EWRmedio_PlaylistCreate" version_id="36" version_string="1.3.6"><![CDATA[<xen:title>{xen:phrase create_new_playlist}</xen:title>
+<xen:h1>{xen:phrase create_new_playlist}</xen:h1>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/playlist/create'}" method="post" class="xenForm">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}:</label></dt>
+				<dd><input type="text" name="playlist_name" class="textCtrl" id="ctrl_name" value="" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd>{xen:raw $editorTemplate}</dd>
+			</dl>
+		</fieldset>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_playlist}" name="submit" accesskey="s" class="button primary" />
+			</dd>
+		</dl>
+
+		<input type="hidden" name="media_id" value="{$mediaID}" />
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_PlaylistDelete" version_id="36" version_string="1.3.6"><![CDATA[<xen:title>{xen:phrase delete_playlist}: {$playlist.playlist_name}</xen:title>
+
+<form action="{xen:link 'media/playlist/delete', $playlist}" method="post" class="xenForm formOverlay">
+
+	<dl class="ctrlUnit">
+		<dt>{xen:phrase delete_playlist}</dt>
+		<dd>
+			{$playlist.playlist_name}
+			<p class="explain">{xen:phrase delete_playlist_hint}</p>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase delete_playlist}" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_PlaylistEdit" version_id="51" version_string="1.5.1"><![CDATA[<xen:title>{$playlist.playlist_name} - {xen:phrase edit}</xen:title>
+<xen:h1>{$playlist.playlist_name} - {xen:phrase edit}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/user', $playlist}">{$playlist.username}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:link 'full:media/user/playlists', $playlist}">{xen:phrase playlists}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:link 'full:media/playlist', $playlist}">{$playlist.playlist_name}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+<xen:require js="js/8wayrun/EWRmedio_ajax.js" />
+<xen:require js="js/8wayrun/EWRmedio_jqui.js" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/playlist/edit', $playlist}" method="post" class="xenForm">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}:</label></dt>
+				<dd><input type="text" name="playlist_name" class="textCtrl" id="ctrl_name" value="{$playlist.playlist_name}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd>{xen:raw $editorTemplate}</dd>
+			</dl>
+		</fieldset>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_playlist}" name="submit" accesskey="s" class="button primary" />
+				<a href="{xen:link 'media/playlist/delete', $playlist}" type="button" class="button OverlayTrigger">{xen:phrase delete_playlist}...</a>
+			</dd>
+		</dl>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+
+		<xen:if is="{$mediaList}">
+		<fieldset class="sortColumn">
+			<xen:foreach loop="$mediaList" value="$media">
+				<dl class="ctrlUnit">
+					<dt>
+						<a class="button sortDelete">{xen:phrase delete}</a>
+						<img src="{xen:helper medio, $media}" border="0" alt="{$media.media_title}" />
+						<input type="hidden" class="position" name="playlist_media[]" value="{$media.media_id}" />
+					</dt>
+					<dd>
+						<div class="portlet secondaryContent">{$media.media_title}</div>
+					</dd>
+				</dl>
+			</xen:foreach>
+		</fieldset>
+		</xen:if>
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_PlaylistRemove" version_id="38" version_string="1.3.8"><![CDATA[<xen:title>{xen:phrase remove_from_playlist}: {$playlist.playlist_name}</xen:title>
+
+<form action="{xen:link 'media/playlist/move/{$media.media_id}/rem', $playlist}" method="post" class="xenForm formOverlay">
+
+	<dl class="ctrlUnit">
+		<dt>{xen:phrase remove_from_playlist}</dt>
+		<dd>
+			{$media.media_title}
+			<p class="explain">{xen:phrase remove_from_playlist_hint}</p>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase remove_from_playlist}" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_Playlists" version_id="52" version_string="1.5.2"><![CDATA[<xen:title>{xen:phrase playlists}</xen:title>
+<xen:h1>{xen:phrase playlists}</xen:h1>
+<xen:require css="EWRmedio.css" />
+
+<xen:pagenav link="media/playlists" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<div class="sectionMain mediaPlayList mediaPlayLists">
+	<div class="subHeading">{xen:phrase playlists}</div>
+
+	<xen:if is="{$playlists}">
+		<ul>
+		<xen:foreach loop="$playlists" value="$playlist">
+			<xen:include template="EWRmedio_Bit_Playlists" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_category}</div>
+	</xen:if>
+</div>
+
+<xen:pagenav link="media/playlists" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<xen:if is="{$perms.playlist}">
+<div class="sectionMain">
+	<div class="subHeading">{xen:phrase create_new_playlist}</div>
+
+	<div class="section" style="text-align: center;">
+		<a href="{xen:link 'media/playlist/create'}" class="button">{xen:phrase create_new_playlist}</a>
+	</div>
+</div>
+</xen:if>
+
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_PlaylistView" version_id="51" version_string="1.5.1"><![CDATA[<xen:title>{$playlist.playlist_name}</xen:title>
+<xen:h1>{$playlist.playlist_name}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/user', $playlist}">{$playlist.username}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:link 'full:media/user/playlists', $playlist}">{xen:phrase playlists}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain mediaPlayList">
+	<div class="subHeading">
+		<div style="float: right;">
+			<xen:if is="{$perms.mod} || {$playlist.user_id} == {$visitor.user_id}">
+				(<a href="{xen:link 'media/playlist/edit', $playlist}">{xen:phrase edit}</a>)
+			</xen:if>
+		</div>
+		{$playlist.playlist_name}
+	</div>
+
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit_Playlist" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_playlist}</div>
+	</xen:if>
+</div>
+
+<xen:include template="EWRmedio_PlaylistView_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_PlaylistView_Sidebar" version_id="35" version_string="1.3.5"><![CDATA[<xen:sidebar>
+
+	<div class="section" id="Details">
+		<div class="secondaryContent">
+			<h3>
+				{xen:phrase playlist_details}
+				<div style="float: right;">
+					<xen:if is="{$perms.mod} || {$playlist.user_id} == {$visitor.user_id}">
+						(<a href="{xen:link 'media/playlist/edit', $playlist}">{xen:phrase edit}</a>)
+					</xen:if>
+				</div>
+			</h3>
+
+			<div style="text-align: center;">
+				{xen:phrase posted_by} <a href="{xen:link 'media/user', $playlist}">{$playlist.username}</a><br />
+				<br />
+				{xen:raw $playlist.HTML}<br />
+				<br />
+				<input type="text" name="media_url" value="{xen:link 'full:media/playlist', $playlist}" readonly="readonly" class="textCtrl" style="width: 200px;" onclick="this.focus(); this.select()" /><br />
+			</div>
+		</div>
+	</div>
+
+	<xen:if is="{$perms.mod} || {$playlist.user_id} == {$visitor.user_id}">
+	<div class="section" id="Playlists">
+		<div class="secondaryContent">
+			<h3>{xen:phrase add_to_playlist}</h3>
+
+			<form action="{xen:link 'media/playlist/addto', $playlist}" method="post" style="text-align: center;">
+				<input type="text" name="media_url"  placeholder="{xen:phrase media_url}..."class="textCtrl" style="width: 200px;" /><br />
+				<br />
+				<input type="submit" value="{xen:phrase add_to_playlist}" name="submit" accesskey="s" class="button primary" />
+
+				<input type="hidden" name="playlist_id" value="{$playlist.playlist_id}" />
+				<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+			</form>
+		</div>
+	</div>
+	</xen:if>
+
+	<xen:include template="sidebar_share_page">
+		<xen:set var="$url">{xen:link canonical:media_playlist, $playlist}</xen:set>
+	</xen:include>
+
+</xen:sidebar>]]></template>
+    <template title="EWRmedio_Profile_Content" version_id="26" version_string="1.2.6"><![CDATA[<li id="media" class="profileContent" data-loadUrl="{xen:link media/user, $user}">
+	{xen:phrase loading}...
+	<noscript><a href="{xen:link media/user, $user}">{xen:phrase view}</a></noscript>
+</li>]]></template>
+    <template title="EWRmedio_Profile_Heading" version_id="25" version_string="1.2.5"><![CDATA[<li><a href="{xen:link members, {$user}}#media">{xen:phrase recent_media}</a></li>]]></template>
+    <template title="EWRmedio_Report_Comment" version_id="30" version_string="1.3.0"><![CDATA[<div class="primaryContent">{xen:helper bodyText, $content.comment_message}</div>
+<dl class="secondaryContent pairsInline">
+	<dt>{xen:phrase media}:</dt>
+	<dd><a href="{xen:link media, {$content}}">{$content.media_title}</a></dd>
+</dl>]]></template>
+    <template title="EWRmedio_Report_Media" version_id="30" version_string="1.3.0"><![CDATA[<div class="primaryContent">{xen:helper bbCode, $bbCodeParser, $content.media_description}</div>
+<dl class="secondaryContent pairsInline">
+	<dt>{xen:phrase media}:</dt>
+	<dd><a href="{xen:link media, {$content}}">{$content.media_title}</a></dd>
+</dl>]]></template>
+    <template title="EWRmedio_Search_Form" version_id="30" version_string="1.3.0"><![CDATA[<xen:title>{xen:phrase search_media}</xen:title>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link full:search}">{xen:phrase search}</xen:breadcrumb>
+</xen:navigation>
+
+<form action="{xen:link 'search/search'}" method="post" class="xenForm AutoValidator" data-optInOut="optIn" data-redirect="true">
+
+	<xen:include template="search_form_tabs" />
+	
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_keywords">{xen:phrase keywords}:</label></dt>
+		<dd>
+			<ul>
+				<li><input type="search" name="keywords" value="{$search.keywords}" results="0" class="textCtrl" id="ctrl_keywords" autofocus="true" /></li>
+				<li><label for="ctrl_title_only"><input type="checkbox" name="title_only" id="ctrl_title_only" value="1" {xen:checked '{$search.title_only}'} /> {xen:phrase search_titles_only}</label></li>
+			</ul>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_users">{xen:phrase posted_by_member}:</label></dt>
+		<dd>
+			<ul>
+				<li>
+					<input type="text" name="users" value="{$search.users}" class="textCtrl AutoComplete" id="ctrl_users" />
+					<p class="explain">{xen:phrase separate_names_with_comma}</p>
+				</li>
+			</ul>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_date">{xen:phrase newer_than}:</label></dt>
+		<dd>
+			<input type="date" name="date" value="{$search.date}" class="textCtrl" id="ctrl_date" />
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd><input type="submit" value="{xen:phrase search}" accesskey="s" class="button primary" /></dd>
+	</dl>
+
+	<input type="hidden" name="type" value="media" />
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="EWRmedio_Search_Result" version_id="38" version_string="1.3.8"><![CDATA[<li id="media-{$media.media_id}" class="searchResult media primaryContent" data-author="{$media.username}">
+
+	<div class="listBlock posterAvatar"><xen:avatar user="$media" size="s" img="true" /></div>
+
+	<div class="listBlock main">
+		<div class="mediaThumb" style="float: left; padding-right: 5px;">
+			<a href="{xen:link media, $media}">
+				<img src="{xen:helper medio, $media}" border="0" alt="{$media.media_title}" class="avatarCropper" style="height: 48px; width: 84px;" />
+			</a>
+		</div>
+
+		<div class="titleText">
+			<h3 class="title">{$i} <a href="{xen:link media, $media}">{xen:helper highlight, $media.media_title, $search.search_query, 'highlight'}</a></h3>
+		</div>
+
+		<div class="meta">
+			{xen:phrase media_by}: <xen:username user="$media" />,
+			<xen:datetime time="{$media.media_date}" />
+			{xen:phrase in_category}: <a href="{xen:link media/category, $media}">{$media.category_name}</a>
+		</div>
+
+		<blockquote class="snippet"><a href="{xen:link media, $media}">{xen:helper snippet, $media.media_description, 120, {xen:array 'term={$search.search_query}', 'emClass=highlight', 'stripQuote=1'}}</a></blockquote>
+
+	</div>
+</li>]]></template>
+    <template title="EWRmedio_Search_Tab" version_id="30" version_string="1.3.0"><![CDATA[<li{xen:if "{$searchType} == 'media'", ' class="active"'}><a href="{xen:link search, '', 'type=media'}">{xen:phrase search_media}</a></li>]]></template>
+    <template title="EWRmedio_ServiceAdmin" version_id="39" version_string="1.3.9"><![CDATA[<xen:title>{xen:phrase administrate_services}</xen:title>
+<xen:h1>{xen:phrase administrate_services}</xen:h1>
+
+<xen:if is="{$isPremium}">
+	<xen:topctrl><a href="{xen:link 'media/admin/rebuild'}" class="callToAction"><span>{xen:phrase rebuild_services}</span></a></xen:topctrl>
+</xen:if>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">{xen:phrase administrate_services}</div>
+
+	<xen:foreach loop="$srvList" value="$service">
+		<div class="primaryContent">
+			<div style="float: right;">
+				<xen:if is="{$isPremium}">(<a href="{xen:link 'media/service/export', $service}">{xen:phrase export}</a>)</xen:if>
+				(<a href="{xen:link 'media/service/edit', $service}">{xen:phrase edit}</a>)
+			</div>
+			<span style="display: inline-block; width: 150px;">
+				<a href="{xen:link 'media/service', $service}">{$service.service_name}</a>
+			</span>
+			<span class="muted" style="display: inline-block; width: 500px;">
+				{$service.service_url}
+			</span>
+			<span class="muted" style="display: inline-block;">
+				{$service.service_media} - {$service.service_type}
+			</span>
+		</div>
+	</xen:foreach>
+</div>
+
+<xen:if is="{$isPremium}">
+<div class="sectionMain">
+	<div class="subHeading">
+		{xen:phrase import_service}
+	</div>
+
+	<form action="{xen:link 'media/admin/import'}" method="post" enctype="multipart/form-data">
+		<div class="primaryContent" style="text-align: center;">
+			<input type="file" name="upload_file" />
+			<input type="submit" value="{xen:phrase import_service}" name="submit" accesskey="s" class="button primary" />
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+</xen:if>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_ServiceEdit" version_id="51" version_string="1.5.1"><![CDATA[<xen:title>{$service.service_name} - {xen:phrase edit}</xen:title>
+<xen:h1>{$service.service_name} - {xen:phrase edit}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/admin/services'}">{xen:phrase administrate_services}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:link 'full:media/service', $service}">{$service.service_name}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+<xen:require js="js/8wayrun/slugit.js" />
+<xen:require js="js/8wayrun/EWRmedio_ajax.js" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/service/edit', $service}" method="post" class="xenForm AutoValidator" data-redirect="true">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_name">{xen:phrase service_name}:</label></dt>
+				<dd><input type="text" name="service_name" class="textCtrl SlugIn" id="ctrl_name" value="{$service.service_name}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_slug">{xen:phrase link_url}:</label></dt>
+				<dd><input type="text" name="service_newslug" class="textCtrl SlugEdit SlugOut" id="ctrl_slug" value="{$service.service_slug}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_url">{xen:phrase trackback_url}:</label></dt>
+				<dd><input type="text" name="service_url" class="textCtrl" id="ctrl_url" value="{$service.service_url}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_regex">{xen:phrase regular_expression}:</label></dt>
+				<dd><textarea name="service_regex" id="ctrl_regex" class="textCtrl" rows="3">{$service.service_regex}</textarea></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_type">{xen:phrase data_type}:</label></dt>
+				<dd><select name="service_type" id="ctrl_type" class="textCtrl autoSize">
+					<option value="mrss" {xen:if "{$service.service_type}=='mrss'", 'selected'}>{xen:phrase mrss}</option>
+					<option value="json" {xen:if "{$service.service_type}=='json'", 'selected'}>{xen:phrase json}</option>
+					<option value="html" {xen:if "{$service.service_type}=='html'", 'selected'}>{xen:phrase html}</option>
+				</select></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_feed">{xen:phrase data_feed_url}:</label></dt>
+				<dd><input type="text" name="service_feed" class="textCtrl" id="ctrl_feed" value="{$service.service_feed}" /></dd>
+			</dl>
+		</fieldset>
+
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_value2">{xen:phrase serviceval2}: <span style="display: inline-block; width: 50px;">$val2 =</span></label></dt>
+				<dd><input type="text" name="service_value2" class="textCtrl" id="ctrl_value2" value="{$service.service_value2}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_thumb">{xen:phrase thumbnail}: <span style="display: inline-block; width: 50px;">$thum =</span></label></dt>
+				<dd><input type="text" name="service_thumb" class="textCtrl" id="ctrl_thumb" value="{$service.service_thumb}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}: <span style="display: inline-block; width: 50px;">$titl =</span></label></dt>
+				<dd><input type="text" name="service_title" class="textCtrl" id="ctrl_title" value="{$service.service_title}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_description">{xen:phrase description}: <span style="display: inline-block; width: 50px;">$desc =</span></label></dt>
+				<dd><input type="text" name="service_description" class="textCtrl" id="ctrl_description" value="{$service.service_description}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_duration">{xen:phrase duration}: <span style="display: inline-block; width: 50px;">$dura =</span></label></dt>
+				<dd><input type="text" name="service_duration" class="textCtrl" id="ctrl_duration" value="{$service.service_duration}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_keywords">{xen:phrase keywords}: <span style="display: inline-block; width: 50px;">$keyw =</span></label></dt>
+				<dd><input type="text" name="service_keywords" class="textCtrl" id="ctrl_keywords" value="{$service.service_keywords}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_errors">{xen:phrase error_info}: <span style="display: inline-block; width: 50px;">$errs =</span></label></dt>
+				<dd><input type="text" name="service_errors" class="textCtrl" id="ctrl_errors" value="{$service.service_errors}" /></dd>
+			</dl>
+		</fieldset>
+
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_media">{xen:phrase data_type}:</label></dt>
+				<dd><select name="service_media" id="ctrl_media" class="textCtrl autoSize">
+					<option value="video" {xen:if "{$service.service_media}=='video'", 'selected'}>{xen:phrase video}</option>
+					<option value="gallery" {xen:if "{$service.service_media}=='gallery'", 'selected'}>{xen:phrase gallery}</option>
+				</select></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_movie">{xen:phrase embed_movie}:</label></dt>
+				<dd><input type="text" name="service_movie" class="textCtrl" id="ctrl_movie" value="{$service.service_movie}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_height">{xen:phrase width} x {xen:phrase height}:</label></dt>
+				<dd><input type="text" name="service_width" class="textCtrl" id="ctrl_width" value="{$service.service_width}" style="width: 35px; text-align: right" /> x
+					<input type="text" name="service_height" class="textCtrl" id="ctrl_height" value="{$service.service_height}" style="width: 35px;" /</dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd><textarea name="service_parameters" id="ctrl_parameters" class="textCtrl" rows="10">{$service.service_parameters}</textarea></dd>
+			</dl>
+		</fieldset>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_service}" name="submit" accesskey="s" class="button primary" />
+				<input type="submit" value="{xen:phrase save_and_reload}" name="reload" class="button" />
+			</dd>
+		</dl>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_ServiceView" version_id="35" version_string="1.3.5"><![CDATA[<xen:title>{$service.service_name}</xen:title>
+<xen:h1>{$service.service_name}</xen:h1>
+<xen:description>{xen:phrase media_hosted_on_x, 'service={$service.service_name}'}</xen:description>
+
+<xen:container var="$head.rss">
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={xen:phrase media_library}'}" href="{xen:link 'full:media/rss'}" />
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={$service.service_name}'}" href="{xen:link 'full:media/service/rss', $service}" />
+</xen:container>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/services'}">{xen:phrase services}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<xen:pagenav link="media/service" linkdata="{$service}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">
+		<div style="float: right;">
+			<xen:if is="{$perms.admin}">
+				(<a href="{xen:link 'media/service/edit', $service}">{xen:phrase edit}</a>)
+			</xen:if>
+		</div>
+		{$service.service_name}
+	</div>
+
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_category}</div>
+	</xen:if>
+</div>
+
+<xen:pagenav link="media/service" linkdata="{$service}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<xen:include template="EWRmedio_Submit_Small" />
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_Sidebar" version_id="51" version_string="1.5.1"><![CDATA[<xen:require css="member_list.css" />
+
+<xen:sidebar>
+
+	<div class="section mediaNav" id="Categories">
+		<div class="secondaryContent">
+			<h3><a href="{xen:link 'media/categories'}">{xen:phrase media_categories}</a></h3>
+
+			<div class="pairsJustified">
+			<xen:foreach loop="$sidebar.categories" value="$subCat">
+				<dl>
+					<dt>
+						<xen:if is="{$category.category_id} != {$subCat.category_id}">
+							{xen:raw $subCat.category_indent}<a href="{xen:link 'media/category', $subCat}">{$subCat.category_name}</a>
+						<xen:else />
+							{xen:raw $subCat.category_indent}<b>{$subCat.category_name}</b>
+						</xen:if>
+					</dt>
+					<dd>({$subCat.count})</dd>
+				</dl>
+			</xen:foreach>
+			</div>
+		</div>
+	</div>
+
+	<div class="section mediaNav">
+		<div class="secondaryContent" id="Search">
+			<h3>{xen:phrase search_media}</h3>
+
+			<div class="findMember">
+				<form action="{xen:link 'search/search'}" method="post" class="AutoValidator" data-optInOut="optIn" data-redirect="true">
+					<input type="search" name="keywords" class="textCtrl" placeholder="{xen:phrase search_media}..." results="0" title="{xen:phrase enter_your_search_and_hit_enter}" id="searchBar_keywords" value="{$search.keywords}" />
+					<input type="hidden" name="type" value="media" />
+					<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+				</form>
+			</div>
+		</div>
+	</div>
+
+<xen:include template="EWRmedio_Sidebar_Cloud" />
+
+<xen:if is="{$sidebar.users}">
+	<div class="section mediaNav" id="Users">
+		<div class="secondaryContent">
+			<h3>{xen:phrase top_contributors}</h3>
+
+			<div class="pairsJustified">
+			<xen:foreach loop="$sidebar.users" value="$subUser">
+				<dl>
+					<dt>
+						<xen:if is="{$user.user_id} != {$subUser.user_id}">
+							<a href="{xen:link 'media/user', $subUser}">{$subUser.username}</a>
+						<xen:else />
+							<b>{$subUser.username}</b>
+						</xen:if>
+					</dt>
+					<dd>({$subUser.count})</dd>
+				</dl>
+			</xen:foreach>
+			</div>
+		</div>
+	</div>
+</xen:if>
+
+	<xen:include template="sidebar_share_page">
+		<xen:if is="{$category}">
+			<xen:set var="$url">{xen:link canonical:media/category, $category}</xen:set>
+		<xen:elseif is="{$user}" />
+			<xen:set var="$url">{xen:link canonical:media/user, $user}</xen:set>
+		<xen:elseif is="{$service}" />
+			<xen:set var="$url">{xen:link canonical:media/service, $service}</xen:set>
+		<xen:elseif is="{$keyword}" />
+			<xen:set var="$url">{xen:link canonical:media/keyword, $keyword}</xen:set>
+		<xen:else />
+			<xen:set var="$url">{xen:link canonical:media}</xen:set>
+		</xen:if>
+	</xen:include>
+
+	<div class="section">
+		<div class="secondaryContent statsList" id="Statistics">
+			<h3>{xen:phrase library_statistics}</h3>
+
+			<div class="pairsJustified">
+				<dl>
+					<dt>{xen:phrase total_media}:</dt>
+					<dd>{xen:number $sidebar.stats.media}</dd>
+				</dl>
+				<dl>
+					<dt>{xen:phrase total_categories}:</dt>
+					<dd>{xen:number $sidebar.stats.categories}</dd>
+				</dl>
+				<dl>
+					<dt>{xen:phrase total_comments}:</dt>
+					<dd>{xen:number $sidebar.stats.comments}</dd>
+				</dl>
+				<dl>
+					<dt>{xen:phrase total_likes}:</dt>
+					<dd>{xen:number $sidebar.stats.likes}</dd>
+				</dl>
+				<dl>
+					<dt>{xen:phrase total_views}:</dt>
+					<dd>{xen:number $sidebar.stats.views}</dd>
+				</dl>
+			</div>
+		</div>
+	</div>
+
+</xen:sidebar>]]></template>
+    <template title="EWRmedio_Sidebar_Cloud" version_id="38" version_string="1.3.8"><![CDATA[<xen:if is="{$sidebar.keywords}">
+	<div class="section mediaCloud">
+		<div class="secondaryContent" id="Cloud">
+			<h3>{xen:phrase media_keyword_cloud}</h3>
+
+			<div id="keywordCloud">
+				<ul id="textCloud">
+				<xen:foreach loop="$sidebar.keywords" value="$subWord">
+					<li style="font-size:{$subWord.keyword_size}px;" title="{$subWord.keyword_count}">
+						<a href="{xen:link 'media/keyword', $subWord}">{$subWord.keyword_text}</a>
+					</li>
+				</xen:foreach>
+				</ul>
+			</div>
+
+			<xen:if is="{$sidebar.animated}">
+				<xen:require js="js/8wayrun/swfobject.js" />
+				<script type="text/javascript">
+					var so = new SWFObject("styles/8wayrun/tagcloud.swf", "tagcloud", "100%", "240", "7");
+					so.addParam("wmode", "transparent");
+					so.addVariable("tcolor", "0x000000");
+					so.addVariable("tcolor2", "0x1061B3");
+					so.addVariable("hicolor", "0xFF0000");
+					so.addVariable("mode", "tags");
+					so.addVariable("distr", "true");
+					so.addVariable("tspeed", "200");
+					so.addVariable("tagcloud", "<tags>{$sidebar.animated}</tags>");
+					so.write("keywordCloud");
+				</script>
+			</xen:if>
+		</div>
+	</div>
+</xen:if>]]></template>
+    <template title="EWRmedio_Submit" version_id="53" version_string="1.5.3"><![CDATA[<xen:title>{xen:phrase submit_media}</xen:title>
+<xen:h1>{xen:phrase submit_media}</xen:h1>
+
+<xen:require css="EWRmedio.css" />
+<xen:require js="js/8wayrun/slugit.js" />
+<xen:require js="js/8wayrun/EWRmedio_ajax.js" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/submit'}" method="post" class="xenForm" style="text-align: center; width: auto;">
+		<b>{xen:phrase media_url}:</b> &nbsp; &nbsp;
+		<input type="text" name="source" class="textCtrl" id="ctrl_source" value="{$media.service_url}" style="width: 300px;" /> &nbsp; &nbsp;
+		<input type="submit" value="{xen:phrase retrieve_information}" name="submit" accesskey="s" class="button primary" />
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:if is="{$media.error}">
+<div class="sectionMain">
+	<div class="primaryContent" style="text-align: center; font-size: 1.5em;"><b>{$media.error}</b></div>
+</div>
+</xen:if>
+
+<xen:if is="{$media.media_thumb}">
+<div class="sectionMain">
+	<form action="{xen:link 'media/submit'}" method="post" class="xenForm AutoValidator" data-redirect="true">
+		<div style="text-align: center;">
+			<xen:include template="EWRmedio_Embed" />
+		</div>
+
+		<fieldset style="position: relative;">
+			<div style="position: absolute; top: 10px; left: 40px;"><img src="{$media.media_thumb}" height="70" /></div>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_title">{xen:phrase title}:</label></dt>
+				<dd><input type="text" name="media_title" class="textCtrl" id="ctrl_title" value="{$media.media_title}" /></dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_category">{xen:phrase category}:</label></dt>
+				<dd><select name="category_id" id="ctrl_category" class="textCtrl autoSize">
+					<option value="0">({xen:phrase unspecified})</option>
+					<xen:foreach loop="$fullList" value="$list">
+						<option value="{$list.category_id}" {xen:if '{$list.category_disabled}', 'disabled'}>
+						&nbsp; &nbsp; {xen:raw $list.category_indent}{xen:raw $list.category_name}</option>
+					</xen:foreach>
+				</select></dd>
+			</dl>
+
+			<dl class="ctrlUnit fullWidth">
+				<dt></dt>
+				<dd>{xen:raw $editorTemplate}</dd>
+			</dl>
+
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_minutes">{xen:phrase duration}:</label></dt>
+				<dd>
+					<xen:if is="{$media.service_media} == 'gallery'">
+						<input type="text" name="media_seconds" class="textCtrl" maxlength="5" id="ctrl_seconds" value="{$media.media_duration}" style="width: 40px; text-align: right;" />&nbsp; {xen:phrase x_images, 'count='}
+					<xen:else />
+						<input type="text" name="media_hours" class="textCtrl" maxlength="2" id="ctrl_hours" value="{$media.media_hours}" style="width: 18px; text-align: right;" />&nbsp; {xen:phrase x_hours, 'count='} &nbsp;
+						<input type="text" name="media_minutes" class="textCtrl" maxlength="2" id="ctrl_minutes" value="{$media.media_minutes}" style="width: 18px; text-align: right;" />&nbsp; {xen:phrase x_minutes, 'count='} &nbsp;
+						<input type="text" name="media_seconds" class="textCtrl" maxlength="2" id="ctrl_seconds" value="{$media.media_seconds}" style="width: 18px; text-align: right;" />&nbsp; {xen:phrase x_seconds, 'time='}
+					</xen:if>
+				</dd>
+			</dl>
+		</fieldset>
+
+		<xen:if hascontent="true">
+		<fieldset>
+			<xen:contentcheck>
+			<xen:foreach loop="$customs" key="$customID" value="$custom">
+				<xen:include template="EWRmedio_Custom_Options">
+					<xen:set var="$ctrl">ctrl_{$customID}</xen:set>
+					<xen:set var="$name">media_{$customID}</xen:set>
+				</xen:include>
+			</xen:foreach>
+			</xen:contentcheck>			
+		</fieldset>
+		</xen:if>
+
+		<fieldset>
+			<xen:if is="{$xenOptions.EWRmedio_newkeywords}">
+				<dl class="ctrlUnit">
+					<dt><label for="ctrl_keywords">{xen:phrase media_keywords}:</label></dt>
+					<dd><input type="text" name="media_keywords" class="textCtrl KeywordEdit" id="ctrl_keywords" value="{$media.media_keywords}" />
+						<li><p class="hint">{xen:phrase media_keyword_hint}</p></li>
+					</dd>
+				</dl>
+			<xen:else />
+				<xen:if hascontent="true">
+				<dl class="ctrlUnit fullWidth mediaKeywords">
+					<dt></dt>
+					<dd>
+						<ul>
+						<xen:contentcheck>
+						<xen:foreach loop="$keywords" value="$keyword">
+							<li>
+								<label for="ctrl_keyarray[{$keyword.keyword_id}]">
+									<input type="checkbox" name="media_keyarray[{$keyword.keyword_id}]" value="{$keyword.keyword_text}" id="ctrl_keyarray[{$keyword.keyword_id}]">
+									{$keyword.keyword_text}
+								</label>
+							</li>
+						</xen:foreach>
+						</xen:contentcheck>
+						</ul>
+					</dd>
+				</dl>
+				</xen:if>
+				<input type="hidden" name="media_keywords" id="ctrl_keywords" value=""  />
+			</xen:if>
+		</fieldset>
+
+		<xen:include template="helper_captcha_unit" />
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_media}" name="submit" accesskey="s" class="button primary" />
+			</dd>
+		</dl>
+
+		<xen:if hascontent="true">
+		<fieldset>
+			<dl class="ctrlUnit">
+				<dt>{xen:phrase options}:</dt>
+				<dd><ul>
+					<li><label for="ctrl_thread"><input type="checkbox" name="create_thread" value="1" id="ctrl_thread" class="Disabler" {$checked} /> {xen:phrase create_media_thread}:</label>
+						<ul id="ctrl_thread_Disabler">
+							<li>
+								<select name="media_node" class="textCtrl autoSize">
+									<xen:contentcheck>
+										<xen:foreach loop="$forums" value="$forum">
+											<option value="{$forum.node_id}" {xen:if '{$selected} == {$forum.node_id}', 'selected'}>{$forum.title}</option>
+										</xen:foreach>
+									</xen:contentcheck>
+								</select>
+							</li>
+						</ul>
+					</li>
+				</ul></dd>
+			</dl>
+		</fieldset>
+		</xen:if>
+
+		<input type="hidden" name="service_id" value="{$media.service_id}" />
+		<input type="hidden" name="service_value" value="{$media.service_value}" />
+		<input type="hidden" name="service_value2" value="{$media.service_value2}" />
+		<input type="hidden" name="media_thumb" value="{$media.media_thumb}" />
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+</xen:if>
+
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_Submit_Small" version_id="20" version_string="1.2.0"><![CDATA[<xen:if is="{$perms.submit}">
+<div class="sectionMain">
+	<div class="subHeading">{xen:phrase submit_media}</div>
+
+	<form action="{xen:link 'media/submit'}" method="post" class="xenForm" style="text-align: center; width: auto;">
+		<b>{xen:phrase media_url}:</b> &nbsp; &nbsp;
+		<input type="text" name="source" class="textCtrl" id="ctrl_source" value="" style="width: 300px;" /> &nbsp; &nbsp;
+		<input type="submit" value="{xen:phrase retrieve_information}" name="submit" accesskey="s" class="button primary" />
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+</xen:if>]]></template>
+    <template title="EWRmedio_Submit_Youtube" version_id="53" version_string="1.5.3"><![CDATA[<xen:title>{xen:phrase submit_youtube_channel}</xen:title>
+<xen:h1>{xen:phrase submit_youtube_channel}</xen:h1>
+
+<xen:require css="EWRmedio.css" />
+
+<div class="sectionMain">
+	<form action="{xen:link 'media/submit-youtube'}" method="post" class="xenForm" style="text-align: center; width: auto;">
+		<select name="gettype" class="textCtrl autoSize">
+			<option value="channel" {xen:if '{$input.gettype} == "channel"', 'selected'}>Channel</option>
+			<option value="playlist" {xen:if '{$input.gettype} == "playlist"', 'selected'}>Playlist ID</option>
+		</select> :
+		<input type="text" name="channel" class="textCtrl" id="ctrl_source" value="{$input.channel}" style="width: 150px;" /> &nbsp; &nbsp;
+		<b>start:</b>
+		<input type="text" size="1" name="startin" value="{xen:if $input.startin, $input.startin, '1'}" class="textCtrl autoSize SpinBox" step="50" max="951" min="1" /> &nbsp; &nbsp;
+		<b>results:</b>
+		<input type="text" size="1" name="results" value="{xen:if $input.results, $input.results, '25'}" class="textCtrl autoSize SpinBox" step="5" max="50" min="1" /> &nbsp; &nbsp;
+		<input type="submit" value="{xen:phrase retrieve_information}" name="submit" accesskey="s" class="button primary" />
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+
+<xen:if is="{$mediaList}">
+<div class="sectionMain">
+	<form action="{xen:link 'media/submit-youtube-feed'}" method="post" class="xenForm AutoValidator" data-redirect="true">
+
+		<dl class="ctrlUnit">
+			<dt><label for="ctrl_category">{xen:phrase category}:</label></dt>
+			<dd><select name="category_id" id="ctrl_category" class="textCtrl autoSize">
+				<option value="0">({xen:phrase unspecified})</option>
+				<xen:foreach loop="$fullList" value="$list">
+					<option value="{$list.category_id}" {xen:if '{$list.category_disabled}', 'disabled'}>
+					&nbsp; &nbsp; {xen:raw $list.category_indent}{xen:raw $list.category_name}</option>
+				</xen:foreach>
+			</select></dd>
+		</dl>
+
+		<xen:if hascontent="true">
+		<fieldset>
+			<xen:contentcheck>
+			<xen:foreach loop="$customs" key="$customID" value="$custom">
+				<xen:include template="EWRmedio_Custom_Options">
+					<xen:set var="$ctrl">ctrl_{$customID}</xen:set>
+					<xen:set var="$name">media_{$customID}</xen:set>
+				</xen:include>
+			</xen:foreach>
+			</xen:contentcheck>			
+		</fieldset>
+		</xen:if>
+
+		<xen:foreach loop="$mediaList" value="$media">
+			<fieldset style="position: relative;">
+				<xen:if is="{$media.exists}">
+					<dl class="ctrlUnit">
+						<dt>{xen:phrase title}:</dt>
+						<dd><span class="muted" style="text-decoration: line-through;"><a href="{$media.source}" target="_blank">{$media.title}</a></span></dd>
+					</dl>
+				<xen:else />
+					<div style="position: absolute; top: 10px; left: 80px;"><img src="{$media.thumb}" height="60" /></div>
+
+					<label for="ctrl_media[{$media.id}]"><dl class="ctrlUnit">
+						<dt>{xen:phrase title}:
+							<div style="padding: 8px;"><input type="checkbox" name="media[{$media.id}]" value="{$media.source}" id="ctrl_media[{$media.id}]" checked="checked"></div>
+						</dt>
+						<dd><a href="{$media.source}" target="_blank">{$media.title}</a>
+							<p class="hint">{$media.desc}</p>
+						</dd>
+					</dl></label>
+				</xen:if>
+			</fieldset>
+		</xen:foreach>
+
+		<dl class="ctrlUnit">
+			<dt><label for="ctrl_playlist">{xen:phrase add_to_playlist}:</label></dt>
+			<dd><select name="playlist_id" id="ctrl_playlist" class="textCtrl autoSize">
+				<option value="0">({xen:phrase unspecified})</option>
+				<xen:if is="{$playlistList}">
+					<xen:foreach loop="$playlistList" value="$list">
+						<option value="{$list.playlist_id}">&nbsp; &nbsp; {xen:raw $list.playlist_name}</option>
+					</xen:foreach>
+				</xen:if>
+			</select></dd>
+		</dl>
+
+		<dl class="ctrlUnit submitUnit">
+			<dt></dt>
+			<dd>
+				<input type="submit" value="{xen:phrase save_media}" name="submit" accesskey="s" class="button primary" />
+			</dd>
+		</dl>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+</div>
+</xen:if>]]></template>
+    <template title="EWRmedio_UserPlaylists" version_id="52" version_string="1.5.2"><![CDATA[<xen:title>{$user.username}</xen:title>
+<xen:h1>{$user.username}</xen:h1>
+<xen:description>{xen:phrase playlists_added_by_x, 'user={$user.username}', 'link={xen:link members, $user}'}</xen:description>
+
+<xen:container var="$head.rss">
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={xen:phrase media_library}'}" href="{xen:link 'full:media/rss'}" />
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={$user.username}'}" href="{xen:link 'full:media/user/rss', $user}" />
+</xen:container>
+
+<xen:topctrl>
+	<a href="{xen:link 'media/user', $user}" class="callToAction"><span>{xen:phrase media}</span></a>
+</xen:topctrl>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/user', $user}">{$user.username}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<xen:pagenav link="media/user/playlists" linkdata="{$user}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<div class="sectionMain mediaPlayList mediaPlayLists">
+	<div class="subHeading">{xen:phrase playlists}</div>
+
+	<xen:if is="{$playlists}">
+		<ul>
+		<xen:foreach loop="$playlists" value="$playlist">
+			<xen:include template="EWRmedio_Bit_Playlists" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_category}</div>
+	</xen:if>
+</div>
+
+<xen:pagenav link="media/user/playlists" linkdata="{$user}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<xen:if is="{$perms.playlist}">
+<div class="sectionMain">
+	<div class="subHeading">{xen:phrase create_new_playlist}</div>
+
+	<div class="section" style="text-align: center;">
+		<a href="{xen:link 'media/playlist/create'}" class="button">{xen:phrase create_new_playlist}</a>
+	</div>
+</div>
+</xen:if>
+
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_UserView" version_id="51" version_string="1.5.1"><![CDATA[<xen:title>{$user.username}</xen:title>
+<xen:h1>{$user.username}</xen:h1>
+<xen:description>{xen:phrase media_added_by_x, 'user={$user.username}', 'link={xen:link members, $user}'}</xen:description>
+
+<xen:container var="$head.rss">
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={xen:phrase media_library}'}" href="{xen:link 'full:media/rss'}" />
+	<link rel="alternate" type="application/rss+xml" title="{xen:phrase rss_feed_for_x, 'title={$user.username}'}" href="{xen:link 'full:media/user/rss', $user}" />
+</xen:container>
+
+<xen:topctrl>
+	<a href="{xen:link 'media/user/playlists', $user}" class="callToAction"><span>{xen:phrase playlists}</span></a>
+</xen:topctrl>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'full:media/user', $user}">{$user.username}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="EWRmedio.css" />
+
+<xen:pagenav link="media/user" linkdata="{$user}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<div class="sectionMain mediaList">
+	<div class="subHeading">{xen:phrase media}</div>
+
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div style="text-align: center; padding: 50px 0px;">{xen:phrase no_media_in_category}</div>
+	</xen:if>
+</div>
+
+<xen:pagenav link="media/user" linkdata="{$user}" page="{$start}" perpage="{$stop}" total="{$count}" />
+
+<xen:include template="EWRmedio_Submit_Small" />
+<xen:include template="EWRmedio_Sidebar" />
+<xen:include template="EWRmedio_Footer" />]]></template>
+    <template title="EWRmedio_UserView_Simple" version_id="26" version_string="1.2.6"><![CDATA[<xen:require css="EWRmedio.css" />
+
+<div class="mediaList">
+	<h3 class="textHeading">{xen:phrase click_here_to_view_more_media_from_x, 'link={xen:link media/user, $user}', 'source={$user.username}'}</h3>
+
+	<ul>
+	<xen:foreach loop="$mediaList" value="$subMedia">
+		<xen:include template="EWRmedio_Bit" />
+	</xen:foreach>
+	</ul>
+
+	<xen:include template="EWRmedio_Footer" />
+</div>]]></template>
+    <template title="EWRmedio_Watch" version_id="53" version_string="1.5.3"><![CDATA[<xen:title>{xen:phrase unread_watched_media}</xen:title>
+<xen:description>{xen:phrase this_is_list_of_x_most_recently_updated_media_unread_comments, 'count={$xenOptions.discussionsPerPage}'} <a href="{xen:link 'watched/media/all'}">{xen:phrase there_may_be_more_to_view}</a></xen:description>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link full:media}">{xen:phrase media}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="discussion_list.css" />
+<xen:require css="EWRmedio.css" />
+
+<div class="discussionList sectionMain mediaPlayList">
+	<dl class="sectionHeaders">
+		<dd class="main">
+			<a class="title"><span>{xen:phrase all_watched_media}</span></a>
+		</dd>
+		<dd class="lastPost"><a><span>{xen:phrase last_message}</span></a></dd>
+	</dl>
+	
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit_Playlist" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div class="primaryContent">{xen:phrase you_do_not_have_any_watched_media_that_unread}</div>
+	</xen:if>
+	
+	<div class="sectionFooter">
+		<a href="{xen:link 'watched/media/all'}">{xen:phrase show_all_watched_media}</a>
+	</div>
+
+</div>
+
+<xen:include template="preview_tooltip" />]]></template>
+    <template title="EWRmedio_WatchAll" version_id="53" version_string="1.5.3"><![CDATA[<xen:title>{xen:phrase all_watched_media}{xen:helper pagenumber, $start}</xen:title>
+<xen:h1>{xen:phrase all_watched_media}</xen:h1>
+<xen:description>{xen:phrase this_is_list_of_all_media_that_you_watching}</xen:description>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link full:media}">{xen:phrase media}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:link full:watched/media}">{xen:phrase unread_watched_media}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="discussion_list.css" />
+<xen:require css="EWRmedio.css" />
+
+<div class="pageNavLinkGroup">
+	<div class="linkGroup"></div>
+	<xen:pagenav link="watched/media/all" page="{$start}" perpage="{$stop}" total="{$count}" />
+</div>
+
+<form action="{xen:link 'watched/media/update'}" method="post" class="discussionList sectionMain mediaPlayList">
+
+	<dl class="sectionHeaders">
+		<dd class="main">
+			<a class="title"><span>{xen:phrase all_watched_media}</span></a>
+		</dd>
+		<dd class="lastPost"><a><span>{xen:phrase last_message}</span></a></dd>
+	</dl>
+
+	<xen:if is="{$mediaList}">
+		<ul>
+		<xen:foreach loop="$mediaList" value="$subMedia">
+			<xen:include template="EWRmedio_Bit_Playlist" />
+		</xen:foreach>
+		</ul>
+	<xen:else />
+		<div class="primaryContent">
+			<xen:if is="{$page} > 1">
+				{xen:phrase there_no_media_to_display}
+			<xen:else />
+				{xen:phrase you_not_watching_any_media}
+			</xen:if>
+		</div>
+	</xen:if>
+	
+	<div class="sectionFooter">
+		<select name="do" class="textCtrl">
+			<option>{xen:phrase with_selected}...</option>
+			<option value="email">{xen:phrase enable_email_notification}</option>
+			<option value="no_email">{xen:phrase disable_email_notification}</option>
+			<option value="stop">{xen:phrase stop_watching_threads}</option>
+		</select>
+		<input type="submit" value="{xen:phrase go}" class="button" class="button" />
+	</div>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>
+
+<div class="pageNavLinkGroup">
+	<div class="linkGroup"></div>
+	<xen:pagenav link="watched/media/all" page="{$start}" perpage="{$stop}" total="{$count}" />
+</div>
+
+<xen:include template="preview_tooltip" />]]></template>
+    <template title="EWRmedio_Watch_Wrapper" version_id="52" version_string="1.5.2"><![CDATA[<li><a
+	class="{xen:if "{$selectedKey} == 'alerts/watchMedia'", 'secondaryContent', 'primaryContent'}"
+	href="{xen:link watched/media}">{xen:phrase watched_media}</a></li>]]></template>
+    <template title="news_feed_item_media_comment_insert" version_id="25" version_string="1.2.5"><![CDATA[<h3 class="description">
+
+	{xen:phrase news_feed_media_comment_insert,
+		'poster={xen:helper username, $user, 'primaryText'}',
+		'title={$content.media_title}',
+		'link={xen:link media, $content}'
+	}
+
+</h3>
+
+<p class="snippet">{xen:helper snippet, $content.comment_message, 100}</p>]]></template>
+    <template title="news_feed_item_media_insert" version_id="25" version_string="1.2.5"><![CDATA[<p class="description">{xen:phrase news_feed_media_insert, 'username={xen:helper username, $user, 'primaryText'}'}</p>
+
+<h3 class="title thread"><a href="{xen:link media, $content}">{$content.media_title}</a></h3>
+
+<p class="snippet post">{xen:helper snippet, $content.media_description, 100}</p>
+
+<h4 class="minorTitle forum">{xen:phrase category}: <a href="{xen:link media_category, $content}">{$content.category_name}</a></h4>]]></template>
+    <template title="news_feed_item_media_like" version_id="25" version_string="1.2.5"><![CDATA[<h3 class="description">
+
+	<xen:if is="{$content.user_id} == {$visitor.user_id}">
+
+		<xen:comment><!-- $user liked your status --></xen:comment>
+		{xen:phrase x_liked_your_media_y,
+			'name={xen:helper username, $user, 'primaryText'}',
+			'title={$content.media_title}',
+			'link={xen:link media, $content}'
+		}
+		
+	<xen:else />
+
+		<xen:comment><!-- $user liked $contentUser's media --></xen:comment>
+		{xen:phrase x_liked_ys_media_z,
+			'name={xen:helper username, $user, 'primaryText'}',
+			'title={$content.media_title}',
+			'link={xen:link media, $content}',
+			'poster={$content.username}',
+			'posterLink={xen:link members, $content}'
+		}
+		
+	</xen:if>
+
+</h3>
+
+<p class="snippet">{xen:helper snippet, $content.media_description, 100, {xen:array 'stripQuote=1'}}</p>]]></template>
+  </templates>
+  <bb_code_media_sites/>
+</addon>
