@@ -1,80 +1,117 @@
-# The Criteria System
-
-> Source: [xenforo.com/docs/dev/criteria/](https://xenforo.com/docs/dev/criteria/)
-
----
+# Criteria System
 
 ## Overview
 
-The criteria system lets admins configure conditions that are checked against users or pages. It powers trophies, user-group promotions, and notices — and you can use it in your own add-ons.
+The Criteria system lets admins select conditions that are tested against users or page context. It is used by:
+- Trophies
+- User group promotions
+- Forum notices
+- Any add-on that needs conditional matching
 
-A **criterion** = a `rule` (snake_case string) + optional `data` array.
-
-At match time, the rule is converted to a camelCase method name and called on the criteria class:
-`like_count` → `_matchLikeCount()`
-
----
-
-## Built-in criteria types
-
-| Type | Class | Used by |
-|------|-------|---------|
-| User criteria | `XF\Criteria\User` | Trophies, user-group promotions, notices |
-| Page criteria | `XF\Criteria\Page` | Notices |
+Each criterion is a checkbox (optionally with inputs) stored as a **rule** + **data** pair.
 
 ---
 
-## How matching works
+## Criteria Types
+
+| Type | Class | Matches against |
+|------|-------|----------------|
+| User | `XF\Criteria\User` | User entity properties |
+| Page | `XF\Criteria\Page` | Current page/request context |
+| Custom | extends `AbstractCriteria` | Any add-on-defined entity |
+
+---
+
+## Criterion Structure
+
+Every criterion has:
+- **Rule** — a `snake_case` string (e.g., `has_avatar`, `like_count`)
+- **Data** — optional array of additional parameters (e.g., `['likes' => 5]`)
+
+The rule converts to camelCase and is prefixed with `_match` to find the handler method:
+
+```
+rule: like_count   → method: _matchLikeCount(array $data, User $user)
+rule: has_avatar   → method: _matchHasAvatar(array $data, User $user)
+```
+
+---
+
+## How Matching Works
 
 ```php
 // 1. Create a criteria object from saved data
 /** @var \XF\Criteria\User $criteria */
 $criteria = \XF::app()->criteria('XF:User', $entity->user_criteria);
 
-// 2. Optionally: empty selection = no match (important for destructive ops!)
-$criteria->setMatchOnEmpty(false);
-
-// 3. Test against a user
-if ($criteria->isMatched(\XF::visitor()))
-{
-    // visitor matches ALL selected criteria
+// 2. Match a user
+if ($criteria->isMatched(\XF::visitor())) {
+    // All selected criteria match
 }
 ```
 
-`isMatched()` internally:
-1. For each criterion, converts `rule` → `_match<Rule>()` method name
-2. Calls that method — returns `true` = matches, `false` = fails
-3. Unknown rules fire the `criteria_user` / `criteria_page` code event
-4. If no criteria selected, returns `$matchOnEmpty` (default `true`)
+`isMatched()` iterates every selected criterion:
+1. Converts rule → method name
+2. Calls the method if it exists, expects `bool`
+3. If method missing → calls `isUnknownMatched()` → fires `criteria_user` event
+4. Returns `true` only if **all** criteria pass
 
----
-
-## Storing criteria in an entity
+### Empty criteria behavior
 
 ```php
-// Entity column
-'user_criteria' => ['type' => self::JSON_ARRAY, 'default' => []],
-'page_criteria' => ['type' => self::JSON_ARRAY, 'default' => []],
+// Default: empty criteria = match (returns true)
+$criteria->isMatched($user); // true if nothing selected
 
-// In controller — save form input directly
-$userCriteriaInput = $this->filter('user_criteria', 'array');
-$form->basicEntitySave($entity, [
-    'user_criteria' => $userCriteriaInput,
-    'page_criteria' => $this->filter('page_criteria', 'array'),
-]);
+// Override: empty criteria = no match
+$criteria->setMatchOnEmpty(false);
+$criteria->isMatched($user); // false if nothing selected
 ```
 
 ---
 
-## Template UI — `helper_criteria`
+## Built-in User Criteria Examples
 
-Use the built-in `helper_criteria` admin template to render criteria checkboxes:
+From `XF\Criteria\User`:
 
 ```php
-// Controller — prepare data
-$savedCriteria = $entity->user_criteria;
-$criteria      = \XF::app()->criteria('XF:User', $savedCriteria);
-$criteriaData  = $criteria->getExtraTemplateData();
+protected function _matchLikeCount(array $data, \XF\Entity\User $user): bool
+{
+    return $user->like_count >= $data['likes'];
+}
+
+protected function _matchHasAvatar(array $data, \XF\Entity\User $user): bool
+{
+    return $user->user_id && ($user->avatar_date || $user->gravatar);
+}
+
+protected function _matchMessageCount(array $data, \XF\Entity\User $user): bool
+{
+    return $user->message_count >= $data['messages'];
+}
+
+protected function _matchTrophyPoints(array $data, \XF\Entity\User $user): bool
+{
+    return $user->trophy_points >= $data['points'];
+}
+
+protected function _matchUserGroupMember(array $data, \XF\Entity\User $user): bool
+{
+    $groupIds = array_merge([$user->user_group_id], $user->secondary_group_ids);
+    return in_array($data['user_group_id'], $groupIds);
+}
+```
+
+---
+
+## Using `helper_criteria` Template
+
+### Prepare data in controller
+
+```php
+$savedCriteria = $entity->user_criteria; // JSON_ARRAY column
+
+$criteria = $this->app()->criteria('XF:User', $savedCriteria);
+$criteriaData = $criteria->getExtraTemplateData();
 
 $viewParams = [
     'criteria'     => $criteria->getCriteriaForTemplate(),
@@ -82,48 +119,60 @@ $viewParams = [
 ];
 ```
 
+### Template with tabs
+
 ```html
-<!-- Template — without tabs -->
+<xf:form action="{{ link('my-page/save') }}" class="block">
+    <div class="block-container">
+
+        <h2 class="block-tabHeader tabs hScroller" data-xf-init="h-scroller tabs" role="tablist">
+            <span class="hScroller-scroll">
+                <a class="tabs-tab is-active" role="tab" tabindex="0"
+                   aria-controls="ctrl_mainTab">{{ phrase('settings') }}</a>
+                <xf:macro template="helper_criteria" name="user_tabs" />
+                <xf:macro template="helper_criteria" name="page_tabs" />
+            </span>
+        </h2>
+
+        <ul class="block-body tabPanes">
+            <li class="is-active" role="tabpanel" id="ctrl_mainTab">
+                <xf:textboxrow name="title" value="{$entity.title}" label="{{ phrase('title') }}" />
+            </li>
+            <xf:macro template="helper_criteria" name="user_panes"
+                arg-criteria="{$criteria}" arg-data="{$criteriaData}" />
+            <xf:macro template="helper_criteria" name="page_panes"
+                arg-criteria="{$criteria}" arg-data="{$criteriaData}" />
+        </ul>
+
+        <xf:submitrow sticky="true" icon="save" />
+    </div>
+</xf:form>
+```
+
+### Template without tabs
+
+```html
 <xf:macro template="helper_criteria" name="user_panes"
     arg-container="0"
     arg-criteria="{$criteria}"
     arg-data="{$criteriaData}" />
-
-<!-- Template — with tabs (full tab/pane structure) -->
-<h2 class="block-tabHeader tabs hScroller" data-xf-init="h-scroller tabs" role="tablist">
-    <span class="hScroller-scroll">
-        <a class="tabs-tab is-active" role="tab" tabindex="0" aria-controls="main">Settings</a>
-        <xf:macro template="helper_criteria" name="user_tabs" />
-        <xf:macro template="helper_criteria" name="page_tabs" />
-    </span>
-</h2>
-
-<ul class="block-body tabPanes">
-    <li class="is-active" role="tabpanel" id="main">
-        <!-- your other fields -->
-    </li>
-    <xf:macro template="helper_criteria" name="user_panes"
-        arg-criteria="{$criteria}"
-        arg-data="{$criteriaData}" />
-    <xf:macro template="helper_criteria" name="page_panes"
-        arg-criteria="{{ [] }}"
-        arg-data="{{ [] }}" />
-</ul>
 ```
+
+Pass `{{ [] }}` to `arg-criteria` when no saved data exists.
 
 ---
 
-## Custom criterion on an existing type (User)
+## Adding a Custom Criterion to Existing User Criteria
 
-### Step 1 — Add the input to `helper_criteria` via template modification
+### Step 1: Template modification on `helper_criteria`
 
-Target template: `helper_criteria` (Admin tab).  
-Find the appropriate `<!--[XF:user:content_bottom]-->` comment and insert before it:
+Find the appropriate insertion comment (e.g., `<!--[XF:user:content_bottom]-->`) and add your criterion option:
 
 ```html
-<xf:option name="user_criteria[likes_on_single][rule]" value="likes_on_single"
+<xf:option name="user_criteria[likes_on_single][rule]"
+    value="likes_on_single"
     selected="{$criteria.likes_on_single}"
-    label="Has at least X likes on a single post:">
+    label="Likes on single message:">
     <xf:numberbox name="user_criteria[likes_on_single][data][likes]"
         value="{$criteria.likes_on_single.likes}"
         size="5" min="0" step="1" />
@@ -131,94 +180,96 @@ Find the appropriate `<!--[XF:user:content_bottom]-->` comment and insert before
 $0
 ```
 
-### Step 2 — Handle the unknown rule via a code event listener
-
-Register: event `criteria_user`, callback `Demo\Portal\Listener::criteriaUser`
-
-```php
-public static function criteriaUser(
-    string $rule,
-    array $data,
-    \XF\Entity\User $user,
-    bool &$returnValue
-): void {
-    switch ($rule)
-    {
-        case 'likes_on_single':
-            $likes = \XF::db()->fetchOne(
-                'SELECT `reaction_score` FROM `xf_post`
-                 WHERE `user_id` = ?
-                 ORDER BY `reaction_score` DESC
-                 LIMIT 1',
-                [$user->user_id]
-            );
-            $returnValue = is_numeric($likes) && $likes >= $data['likes'];
-            break;
-    }
-}
-```
-
----
-
-## Writing a custom criteria type
-
-For criteria that test something other than a user (e.g., a Post), create a new criteria class:
+### Step 2: Code event listener for `criteria_user`
 
 ```php
 <?php
 
-namespace Demo\Portal\Criteria;
+namespace Demo\Addon;
+
+class Listener
+{
+    public static function criteriaUser(
+        string $rule,
+        array $data,
+        \XF\Entity\User $user,
+        bool &$returnValue
+    ): void {
+        switch ($rule) {
+            case 'likes_on_single':
+                $db = \XF::db();
+                $maxLikes = $db->fetchOne(
+                    'SELECT `likes` FROM `xf_post`
+                     WHERE `user_id` = ?
+                     ORDER BY `likes` DESC LIMIT 1',
+                    [$user->user_id]
+                );
+
+                $returnValue = is_numeric($maxLikes)
+                    && (int) $maxLikes >= (int) ($data['likes'] ?? 0);
+                break;
+        }
+    }
+}
+```
+
+Register via Admin CP > Development > Code event listeners:
+- Event: `criteria_user`
+- Class: `Demo\Addon\Listener`
+- Method: `criteriaUser`
+
+---
+
+## Writing a Custom Criteria Type
+
+For criteria about a completely different entity (e.g., Post):
+
+### Criteria class
+
+```php
+<?php
+
+namespace PostsRemover\Criteria;
 
 use XF\Criteria\AbstractCriteria;
 
 class Post extends AbstractCriteria
 {
-    // Match: post has at least X reactions
-    protected function _matchReactionScore(array $data, \XF\Entity\Post $post): bool
+    protected function _matchLikeCount(array $data, \XF\Entity\Post $post): bool
     {
-        return $post->reaction_score >= $data['score'];
+        return $post->likes && $post->likes >= (int) ($data['likes'] ?? 0);
     }
 
-    // Match: post author has a specific username
     protected function _matchUsername(array $data, \XF\Entity\Post $post): bool
     {
-        return $post->username === $data['name'];
+        return $post->username === ($data['name'] ?? '');
     }
 
-    // Match: post was edited at least X times
     protected function _matchEditedCount(array $data, \XF\Entity\Post $post): bool
     {
-        return $post->edit_count >= $data['count'];
+        return $post->edit_count && $post->edit_count >= (int) ($data['count'] ?? 0);
     }
 
     /**
-     * Custom isMatched for non-User entities.
-     * Mirrors AbstractCriteria::isMatched() but accepts a Post.
+     * Custom matching for Post entity (AbstractCriteria::isMatched() is for User).
      */
     public function isMatchedPost(\XF\Entity\Post $post): bool
     {
-        if (!$this->criteria)
-        {
+        if (!$this->criteria) {
             return $this->matchOnEmpty;
         }
 
-        foreach ($this->criteria as $criterion)
-        {
+        foreach ($this->criteria as $criterion) {
             $rule = $criterion['rule'];
-            $data = isset($criterion['data']) ? $criterion['data'] : [];
+            $data = $criterion['data'] ?? [];
 
             $method = '_match' . \XF\Util\Php::camelCase($rule);
-            if (method_exists($this, $method))
-            {
-                if (!$this->$method($data, $post))
-                {
+            if (method_exists($this, $method)) {
+                if (!$this->$method($data, $post)) {
                     return false;
                 }
-            }
-            else
-            {
-                if (!$this->isUnknownMatchedPost($rule, $data, $post))
-                {
+            } else {
+                if (!$this->isUnknownMatchedPost($rule, $data, $post)) {
                     return false;
                 }
             }
@@ -227,47 +278,112 @@ class Post extends AbstractCriteria
         return true;
     }
 
-    protected function isUnknownMatchedPost(string $rule, array $data, \XF\Entity\Post $post): bool
-    {
+    protected function isUnknownMatchedPost(
+        string $rule,
+        array $data,
+        \XF\Entity\Post $post
+    ): bool {
         return false;
     }
 }
 ```
 
-**Using your custom criteria type:**
+### Template
+
+```html
+<xf:checkboxrow label="Post criteria">
+
+    <xf:option label="Post has at least X likes"
+        name="post_criteria[like_count][rule]" value="like_count">
+        <xf:numberbox name="post_criteria[like_count][data][likes]"
+            size="5" min="0" step="1" />
+    </xf:option>
+
+    <xf:option label="Post author username"
+        name="post_criteria[username][rule]" value="username">
+        <xf:textbox name="post_criteria[username][data][name]" />
+    </xf:option>
+
+    <xf:option label="Post edited at least X times"
+        name="post_criteria[edited_count][rule]" value="edited_count">
+        <xf:numberbox name="post_criteria[edited_count][data][count]"
+            size="5" min="0" step="1" />
+    </xf:option>
+
+</xf:checkboxrow>
+```
+
+### Controller
 
 ```php
-// Create from form input
-/** @var \Demo\Portal\Criteria\Post $postCriteria */
-$postCriteria = \XF::app()->criteria('Demo\Portal:Post', $criteriaInput);
-$postCriteria->setMatchOnEmpty(false);
-
-// Test against a post
-$posts = \XF::finder('XF:Post')->limit(100)->fetch();
-foreach ($posts as $post)
+public function actionRemove()
 {
-    if ($postCriteria->isMatchedPost($post))
-    {
-        // post matches all selected criteria
+    $this->assertPostOnly();
+
+    $postCriteriaInput = $this->filter('post_criteria', 'array');
+
+    /** @var \PostsRemover\Criteria\Post $postCriteria */
+    $postCriteria = $this->app()->criteria('PostsRemover:Post', $postCriteriaInput);
+    $postCriteria->setMatchOnEmpty(false); // don't delete everything if nothing selected
+
+    $posts = $this->finder('XF:Post')->fetch();
+    $deleted = 0;
+
+    foreach ($posts as $post) {
+        if ($postCriteria->isMatchedPost($post)) {
+            $post->delete();
+            $deleted++;
+        }
     }
+
+    return $this->message("Done! $deleted posts removed.");
 }
 ```
 
 ---
 
-## Adding your type to `helper_criteria`
+## getExtraTemplateData()
 
-Create a template modification targeting `helper_criteria` (Admin tab).  
-Search type: Regular expression. Find: `/$/`
+Provides extra data to criteria templates (e.g., lists of categories):
 
-Replace with your tab and pane macros:
+### Override in your criteria class
+
+```php
+public function getExtraTemplateData(): array
+{
+    $templateData = parent::getExtraTemplateData();
+
+    $templateData['demoCategories'] = \XF::finder('Demo:Category')
+        ->order('display_order')
+        ->fetch();
+
+    return $templateData;
+}
+```
+
+### Via event listener (for existing types)
+
+Listen to `criteria_template_data`:
+
+```php
+public static function criteriaTemplateData(array &$templateData): void
+{
+    $templateData['demoCategories'] = \XF::finder('Demo:Category')->fetch();
+}
+```
+
+---
+
+## Adding a Custom Type to helper_criteria
+
+Create a template modification on `helper_criteria` (regex find `/$/ ` to append at end):
 
 ```html
-<xf:macro name="demo_portal_post_tabs" arg-container="" arg-active="">
+<xf:macro name="post_tabs" arg-container="" arg-active="">
     <xf:set var="$tabs">
-        <a class="tabs-tab{{ $active == 'demo_portal_post' ? ' is-active' : '' }}"
-            role="tab" tabindex="0"
-            aria-controls="{{ unique_id('criteriaPostDemo') }}">Post criteria</a>
+        <a class="tabs-tab{{ $active == 'post' ? ' is-active' : '' }}"
+           role="tab" tabindex="0"
+           aria-controls="{{ unique_id('criteriaPost') }}">Post criteria</a>
     </xf:set>
     <xf:if is="$container">
         <div class="tabs" role="tablist">{$tabs|raw}</div>
@@ -276,33 +392,23 @@ Replace with your tab and pane macros:
     </xf:if>
 </xf:macro>
 
-<xf:macro name="demo_portal_post_panes" arg-container="" arg-active="" arg-criteria="!" arg-data="!">
+<xf:macro name="post_panes" arg-container="" arg-active="" arg-criteria="!" arg-data="!">
     <xf:set var="$panes">
-        <li class="{{ $active == 'demo_portal_post' ? 'is-active' : '' }}"
+        <li class="{{ $active == 'post' ? ' is-active' : '' }}"
             role="tabpanel"
-            id="{{ unique_id('criteriaPostDemo') }}">
+            id="{{ unique_id('criteriaPost') }}">
 
             <xf:checkboxrow label="Post conditions">
-
-                <xf:option label="Has at least X reactions"
-                    name="post_criteria[reaction_score][rule]"
-                    value="reaction_score"
-                    selected="{$criteria.reaction_score}">
-                    <xf:numberbox name="post_criteria[reaction_score][data][score]"
-                        value="{$criteria.reaction_score.score}"
+                <xf:option name="post_criteria[like_count][rule]"
+                    value="like_count"
+                    selected="{$criteria.like_count}"
+                    label="Has at least X likes">
+                    <xf:numberbox name="post_criteria[like_count][data][likes]"
+                        value="{$criteria.like_count.likes}"
                         size="5" min="0" step="1" />
                 </xf:option>
-
-                <xf:option label="Was edited at least X times"
-                    name="post_criteria[edited_count][rule]"
-                    value="edited_count"
-                    selected="{$criteria.edited_count}">
-                    <xf:numberbox name="post_criteria[edited_count][data][count]"
-                        value="{$criteria.edited_count.count}"
-                        size="5" min="0" step="1" />
-                </xf:option>
-
             </xf:checkboxrow>
+
         </li>
     </xf:set>
     <xf:if is="$container">
@@ -315,63 +421,27 @@ Replace with your tab and pane macros:
 
 ---
 
-## `getExtraTemplateData()` — inject extra data into criteria templates
+## Storing and Loading Criteria
 
-Override in your criteria class to provide data (e.g., lists of options) to the template:
+Criteria data is stored in `JSON_ARRAY` entity columns:
 
 ```php
-public function getExtraTemplateData(): array
-{
-    $templateData = parent::getExtraTemplateData();
-
-    /** @var \XF\Repository\Forum $forumRepo */
-    $forumRepo = \XF::repository('XF:Forum');
-    $templateData['forums'] = $forumRepo->getForumOptionsData(false);
-
-    return $templateData;
-}
+// Entity column definition
+'user_criteria' => ['type' => self::JSON_ARRAY, 'default' => []],
+'page_criteria' => ['type' => self::JSON_ARRAY, 'default' => []],
 ```
 
-Or use the `criteria_template_data` event to add data to an **existing** criteria type without
-extending it:
-
 ```php
-public static function criteriaTemplateData(array &$templateData): void
-{
-    $templateData['myCustomData'] = \XF::repository('Demo\Portal:Item')->getItemOptions();
-}
-```
-
----
-
-## `setMatchOnEmpty`
-
-Controls what happens when the admin selects **no criteria**:
-
-```php
-$criteria->setMatchOnEmpty(true);   // no selection = everything matches (default)
-$criteria->setMatchOnEmpty(false);  // no selection = nothing matches
-
-// IMPORTANT: Always set to false for destructive operations like bulk-delete
-$postCriteria->setMatchOnEmpty(false);
-```
-
----
-
-## Important warning: large datasets
-
-Never do this:
-```php
-// BAD — loads every post into memory
-$posts = \XF::finder('XF:Post')->fetch();
-foreach ($posts as $post) { /* match */ }
-```
-
-Use a Job for large datasets:
-```php
-// GOOD — process in batches via Job system
-\XF::app()->jobManager()->enqueue('Demo\Portal:MatchPostCriteria', [
-    'start'    => 0,
-    'criteria' => $postCriteriaInput,
+// Controller: save from form
+$form->basicEntitySave($entity, [
+    'user_criteria' => $this->filter('user_criteria', 'array'),
+    'page_criteria' => $this->filter('page_criteria', 'array'),
 ]);
+
+// Controller: prepare for view
+$criteria = $this->app()->criteria('XF:User', $entity->user_criteria);
+$viewParams = [
+    'criteria'     => $criteria->getCriteriaForTemplate(),
+    'criteriaData' => $criteria->getExtraTemplateData(),
+];
 ```
