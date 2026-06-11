@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "XenForo 2.3+ add-on development knowledge base, packaged as a Claude Code plugin.",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "xenforo-addon-dev",
       "source": "./",
-      "description": "Comprehensive XenForo 2.3+ add-on development reference: entities, finders, repositories, controllers, routing, templates, services, jobs, cron, handlers, content types, permissions, options, phrases, criteria, schema migrations, events/listeners/class-extensions, widgets, build/release tooling, the REST API, and a copy-paste cookbook.",
-      "version": "1.1.0",
+      "description": "Comprehensive XenForo 2.3+ add-on development reference: entities, finders, repositories, controllers, routing, templates, services, jobs, cron, handlers, content types, permissions, options, phrases, criteria, schema migrations, events/listeners/class-extensions, widgets, styles/Less, style properties, template modifications, navigation, build/release tooling, the REST API, and a copy-paste cookbook.",
+      "version": "1.2.0",
       "category": "documentation",
       "keywords": [
         "xenforo",

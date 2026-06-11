@@ -12,7 +12,7 @@
 This repository is a structured knowledge base for building XenForo 2.x add-ons. It contains:
 
 - **`xenforo.md`** — Single-file mega-reference (4,000+ lines) covering every concept with working PHP/XML/HTML code examples
-- **`docs/`** — 15 topic-by-topic deep dives sourced directly from xenforo.com documentation
+- **`docs/`** — 18 topic-by-topic deep dives sourced directly from xenforo.com documentation
 - **`examples/`** — Real, complete add-on code (including the official Demo/Portal tutorial addon)
 - **`cheatsheets/`** — Quick-reference tables for the PHP API, template tags, entity column types
 - **`skills/` + `.claude-plugin/`** — A ready-to-install [Claude Code](https://claude.ai/code) skill so AI agents can pull this reference in automatically
@@ -87,6 +87,9 @@ Point any tool at the raw files: start with [`xenforo.md`](xenforo.md) (everythi
 | Widgets & widget positions | [`docs/13-widgets.md`](docs/13-widgets.md) |
 | Dev tools, build & release | [`docs/14-build-release-devtools.md`](docs/14-build-release-devtools.md) |
 | Cookbook — common recipes | [`docs/15-cookbook-recipes.md`](docs/15-cookbook-recipes.md) |
+| Styles, Less & Designer mode | [`docs/16-styles-less-designer-mode.md`](docs/16-styles-less-designer-mode.md) |
+| Style properties & template modifications | [`docs/17-style-properties-template-modifications.md`](docs/17-style-properties-template-modifications.md) |
+| Navigation & display order | [`docs/18-navigation-display-order.md`](docs/18-navigation-display-order.md) |
 | PHP API quick reference | [`cheatsheets/php-api.md`](cheatsheets/php-api.md) |
 | Template tag reference | [`cheatsheets/template-tags.md`](cheatsheets/template-tags.md) |
 | Entity column types | [`cheatsheets/entity-column-types.md`](cheatsheets/entity-column-types.md) |

@@ -5,13 +5,15 @@ description: >-
   whenever the task involves XenForo: writing or editing add-on code, entities,
   finders, repositories, controllers, routes, templates (.html / <xf:> tags),
   services, jobs, cron, code event listeners, class extensions (XFCP), handlers,
-  content types, permissions, options, phrases, criteria, widgets, Setup.php
-  schema migrations, addon.json, the _data XML files, building/releasing an
-  add-on, or the XenForo REST API. Activate on mentions of XenForo, XF2, XFCP,
-  cmd.php, xf-addon, xf-dev, or files under src/addons/.
+  content types, permissions, options, phrases, criteria, widgets, styles and
+  Less/CSS templates, style properties, template modifications, navigation,
+  Setup.php schema migrations, addon.json, the _data XML files,
+  building/releasing an add-on, or the XenForo REST API. Activate on mentions of
+  XenForo, XF2, XFCP, cmd.php, xf-addon, xf-dev, xf-designer, or files under
+  src/addons/.
 license: MIT
 metadata:
-  version: 1.1.0
+  version: 1.2.0
   targets: XenForo 2.3.x
 ---
 
@@ -58,6 +60,9 @@ directory that contains `xenforo.md` (when installed as a plugin it is
 | Widgets, widget positions, WidgetRenderer | `docs/13-widgets.md` |
 | `xf-dev:export`, `xf-addon:build-release`, hashes, shipping | `docs/14-build-release-devtools.md` |
 | "How do I…" concrete tasks (tabs, alerts, columns, nav) | `docs/15-cookbook-recipes.md` |
+| Styles, Less/CSS templates, inheritance, Designer mode | `docs/16-styles-less-designer-mode.md` |
+| Style properties (`@xf-`), template modifications | `docs/17-style-properties-template-modifications.md` |
+| Public navigation, nav types, display order | `docs/18-navigation-display-order.md` |
 | Quick PHP API lookup (`\XF::`, finder/repo/service methods) | `cheatsheets/php-api.md` |
 | Quick template-tag lookup | `cheatsheets/template-tags.md` |
 | Entity column types and options | `cheatsheets/entity-column-types.md` |
