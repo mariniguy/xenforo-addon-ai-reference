@@ -13,7 +13,7 @@ description: >-
   src/addons/.
 license: MIT
 metadata:
-  version: 1.3.0
+  version: 1.4.0
   targets: XenForo 2.3.x
 ---
 
@@ -70,6 +70,12 @@ directory that contains `xenforo.md` (when installed as a plugin it is
 | Phrases & languages (localization) | `docs/23-phrases-languages.md` |
 | config.php options & cache backends (Redis/Memcached) | `docs/24-config-php-caching.md` |
 | REST API endpoint catalog (every endpoint, method, path) | `docs/25-rest-api-endpoints.md` |
+| Forums, nodes, thread types, prefixes & custom fields | `docs/26-forums-nodes-thread-types.md` |
+| Attachments, smilies, word censoring, Giphy | `docs/27-attachments-smilies-censoring-giphy.md` |
+| Connected accounts / social login (OAuth providers) | `docs/28-connected-accounts-oauth.md` |
+| Friendly URLs, route filters, SEO, sitemap, proxy | `docs/29-friendly-urls-routing-seo.md` |
+| Email, spam management, CAPTCHA, PWA | `docs/30-email-spam-captcha-pwa.md` |
+| API keys, payments, options & ACP add-on management | `docs/31-apikeys-payments-options-addons.md` |
 | Quick PHP API lookup (`\XF::`, finder/repo/service methods) | `cheatsheets/php-api.md` |
 | Quick template-tag lookup | `cheatsheets/template-tags.md` |
 | Entity column types and options | `cheatsheets/entity-column-types.md` |

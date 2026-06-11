@@ -12,7 +12,7 @@
 This repository is a structured knowledge base for building XenForo 2.x add-ons. It contains:
 
 - **`xenforo.md`** — Single-file mega-reference (4,000+ lines) covering every concept with working PHP/XML/HTML code examples
-- **`docs/`** — 25 topic-by-topic deep dives sourced directly from xenforo.com documentation
+- **`docs/`** — 31 topic-by-topic deep dives sourced directly from xenforo.com documentation
 - **`examples/`** — Real, complete add-on code (including the official Demo/Portal tutorial addon)
 - **`cheatsheets/`** — Quick-reference tables for the PHP API, template tags, entity column types
 - **`skills/` + `.claude-plugin/`** — A ready-to-install [Claude Code](https://claude.ai/code) skill so AI agents can pull this reference in automatically
@@ -97,6 +97,12 @@ Point any tool at the raw files: start with [`xenforo.md`](xenforo.md) (everythi
 | Phrases & languages (localization) | [`docs/23-phrases-languages.md`](docs/23-phrases-languages.md) |
 | config.php options & caching | [`docs/24-config-php-caching.md`](docs/24-config-php-caching.md) |
 | REST API endpoint catalog | [`docs/25-rest-api-endpoints.md`](docs/25-rest-api-endpoints.md) |
+| Forums, nodes & thread types | [`docs/26-forums-nodes-thread-types.md`](docs/26-forums-nodes-thread-types.md) |
+| Attachments, smilies, censoring & Giphy | [`docs/27-attachments-smilies-censoring-giphy.md`](docs/27-attachments-smilies-censoring-giphy.md) |
+| Connected accounts & social login (OAuth) | [`docs/28-connected-accounts-oauth.md`](docs/28-connected-accounts-oauth.md) |
+| Friendly URLs, routing & SEO | [`docs/29-friendly-urls-routing-seo.md`](docs/29-friendly-urls-routing-seo.md) |
+| Email, spam, CAPTCHA & PWA | [`docs/30-email-spam-captcha-pwa.md`](docs/30-email-spam-captcha-pwa.md) |
+| API keys, payments, options & add-on management | [`docs/31-apikeys-payments-options-addons.md`](docs/31-apikeys-payments-options-addons.md) |
 | PHP API quick reference | [`cheatsheets/php-api.md`](cheatsheets/php-api.md) |
 | Template tag reference | [`cheatsheets/template-tags.md`](cheatsheets/template-tags.md) |
 | Entity column types | [`cheatsheets/entity-column-types.md`](cheatsheets/entity-column-types.md) |

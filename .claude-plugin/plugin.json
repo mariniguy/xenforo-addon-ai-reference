@@ -1,6 +1,6 @@
 {
   "name": "xenforo-addon-dev",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Comprehensive XenForo 2.3+ add-on development reference for Claude. Loads accurate, idiomatic XenForo APIs (entities, finders, repositories, controllers, services, jobs, handlers, widgets, schema migrations, REST API) as on-demand context so Claude writes correct add-ons without hallucinating.",
   "author": {
     "name": "mariniguy",
