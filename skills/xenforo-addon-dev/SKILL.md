@@ -13,7 +13,7 @@ description: >-
   src/addons/.
 license: MIT
 metadata:
-  version: 1.2.0
+  version: 1.3.0
   targets: XenForo 2.3.x
 ---
 
@@ -63,6 +63,13 @@ directory that contains `xenforo.md` (when installed as a plugin it is
 | Styles, Less/CSS templates, inheritance, Designer mode | `docs/16-styles-less-designer-mode.md` |
 | Style properties (`@xf-`), template modifications | `docs/17-style-properties-template-modifications.md` |
 | Public navigation, nav types, display order | `docs/18-navigation-display-order.md` |
+| General XF2 concepts, autoloader, namespaces, type hints | `docs/19-general-concepts.md` |
+| Exhaustive template syntax (every tag/function/filter) | `docs/20-template-syntax-reference.md` |
+| BB codes, custom BB codes, media sites, editor buttons | `docs/21-bbcode-media-editor.md` |
+| Reactions, content voting, content tags | `docs/22-reactions-voting-tags.md` |
+| Phrases & languages (localization) | `docs/23-phrases-languages.md` |
+| config.php options & cache backends (Redis/Memcached) | `docs/24-config-php-caching.md` |
+| REST API endpoint catalog (every endpoint, method, path) | `docs/25-rest-api-endpoints.md` |
 | Quick PHP API lookup (`\XF::`, finder/repo/service methods) | `cheatsheets/php-api.md` |
 | Quick template-tag lookup | `cheatsheets/template-tags.md` |
 | Entity column types and options | `cheatsheets/entity-column-types.md` |

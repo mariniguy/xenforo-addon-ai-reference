@@ -12,7 +12,7 @@
 This repository is a structured knowledge base for building XenForo 2.x add-ons. It contains:
 
 - **`xenforo.md`** — Single-file mega-reference (4,000+ lines) covering every concept with working PHP/XML/HTML code examples
-- **`docs/`** — 18 topic-by-topic deep dives sourced directly from xenforo.com documentation
+- **`docs/`** — 25 topic-by-topic deep dives sourced directly from xenforo.com documentation
 - **`examples/`** — Real, complete add-on code (including the official Demo/Portal tutorial addon)
 - **`cheatsheets/`** — Quick-reference tables for the PHP API, template tags, entity column types
 - **`skills/` + `.claude-plugin/`** — A ready-to-install [Claude Code](https://claude.ai/code) skill so AI agents can pull this reference in automatically
@@ -90,6 +90,13 @@ Point any tool at the raw files: start with [`xenforo.md`](xenforo.md) (everythi
 | Styles, Less & Designer mode | [`docs/16-styles-less-designer-mode.md`](docs/16-styles-less-designer-mode.md) |
 | Style properties & template modifications | [`docs/17-style-properties-template-modifications.md`](docs/17-style-properties-template-modifications.md) |
 | Navigation & display order | [`docs/18-navigation-display-order.md`](docs/18-navigation-display-order.md) |
+| General concepts & conventions | [`docs/19-general-concepts.md`](docs/19-general-concepts.md) |
+| Template syntax reference (deep) | [`docs/20-template-syntax-reference.md`](docs/20-template-syntax-reference.md) |
+| BB codes, media sites & editor | [`docs/21-bbcode-media-editor.md`](docs/21-bbcode-media-editor.md) |
+| Reactions, content voting & tags | [`docs/22-reactions-voting-tags.md`](docs/22-reactions-voting-tags.md) |
+| Phrases & languages (localization) | [`docs/23-phrases-languages.md`](docs/23-phrases-languages.md) |
+| config.php options & caching | [`docs/24-config-php-caching.md`](docs/24-config-php-caching.md) |
+| REST API endpoint catalog | [`docs/25-rest-api-endpoints.md`](docs/25-rest-api-endpoints.md) |
 | PHP API quick reference | [`cheatsheets/php-api.md`](cheatsheets/php-api.md) |
 | Template tag reference | [`cheatsheets/template-tags.md`](cheatsheets/template-tags.md) |
 | Entity column types | [`cheatsheets/entity-column-types.md`](cheatsheets/entity-column-types.md) |
