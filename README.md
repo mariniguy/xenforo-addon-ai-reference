@@ -2,6 +2,8 @@
 
 > **The most comprehensive XenForo 2.3+ add-on development reference available.**  
 > Built from the official XenForo developer documentation, real add-on source code, and hands-on examples. Designed so AI assistants can write correct, idiomatic XenForo add-ons without hallucinating APIs.
+>
+> **Installable as a Claude Code plugin/skill** — one command and Claude loads this entire reference as on-demand context. See [Use this with Claude](#use-this-with-claude).
 
 ---
 
@@ -10,10 +12,58 @@
 This repository is a structured knowledge base for building XenForo 2.x add-ons. It contains:
 
 - **`xenforo.md`** — Single-file mega-reference (4,000+ lines) covering every concept with working PHP/XML/HTML code examples
-- **`docs/`** — Topic-by-topic deep dives sourced directly from xenforo.com documentation
+- **`docs/`** — 15 topic-by-topic deep dives sourced directly from xenforo.com documentation
 - **`examples/`** — Real, complete add-on code (including the official Demo/Portal tutorial addon)
 - **`cheatsheets/`** — Quick-reference tables for the PHP API, template tags, entity column types
+- **`skills/` + `.claude-plugin/`** — A ready-to-install [Claude Code](https://claude.ai/code) skill so AI agents can pull this reference in automatically
 - **`addons/`** — Downloaded free add-ons from xenforo.com/community for pattern reference
+
+---
+
+## Use this with Claude
+
+The whole point of this repo: give Claude (or any agent) accurate XenForo context so it stops hallucinating APIs. Pick whichever install method fits.
+
+### Option A — Claude Code plugin (recommended)
+
+Install straight from GitHub inside Claude Code:
+
+```text
+/plugin marketplace add mariniguy/xenforo-addon-ai-reference
+/plugin install xenforo-addon-dev@xenforo-addon-ai-reference
+```
+
+Claude now has the **`xenforo-addon-dev`** skill. Ask it to build a XenForo add-on and it auto-loads the right docs on demand (progressive disclosure — no context bloat until needed).
+
+### Option B — Install script (copies the skill locally)
+
+Clone the repo, then run the installer for your OS:
+
+```bash
+# macOS / Linux — install for your user (~/.claude)
+./install.sh
+
+# …or into a specific project's .claude/
+./install.sh --project /path/to/your-xenforo-addon
+```
+
+```powershell
+# Windows PowerShell — install for your user
+.\install.ps1
+
+# …or into a specific project
+.\install.ps1 -Scope Project -ProjectDir C:\dev\my-xenforo-addon
+```
+
+This drops a self-contained `xenforo-addon-dev` skill (SKILL.md + `xenforo.md` + `docs/` + `cheatsheets/` + `examples/`) into `.claude/skills/`.
+
+### Option C — Drop-in project context
+
+Copy [`templates/CLAUDE.md`](templates/CLAUDE.md) to the root of your XenForo add-on project. Claude Code reads it automatically as standing context. Combine with Option A or B for the full reference.
+
+### Option D — Manual / other agents
+
+Point any tool at the raw files: start with [`xenforo.md`](xenforo.md) (everything in one file), or feed the relevant [`docs/`](docs/) file for the subsystem you're working on. The [SKILL.md](skills/xenforo-addon-dev/SKILL.md) index maps task → file.
 
 ---
 
@@ -32,6 +82,11 @@ This repository is a structured knowledge base for building XenForo 2.x add-ons.
 | Permissions, Options, Phrases | [`docs/08-permissions-options-phrases.md`](docs/08-permissions-options-phrases.md) |
 | Criteria system | [`docs/09-criteria-system.md`](docs/09-criteria-system.md) |
 | REST API and Webhooks | [`docs/10-rest-api.md`](docs/10-rest-api.md) |
+| Schema & migrations (Setup.php) | [`docs/11-schema-migrations.md`](docs/11-schema-migrations.md) |
+| Events, listeners, class extensions | [`docs/12-events-listeners-extensions.md`](docs/12-events-listeners-extensions.md) |
+| Widgets & widget positions | [`docs/13-widgets.md`](docs/13-widgets.md) |
+| Dev tools, build & release | [`docs/14-build-release-devtools.md`](docs/14-build-release-devtools.md) |
+| Cookbook — common recipes | [`docs/15-cookbook-recipes.md`](docs/15-cookbook-recipes.md) |
 | PHP API quick reference | [`cheatsheets/php-api.md`](cheatsheets/php-api.md) |
 | Template tag reference | [`cheatsheets/template-tags.md`](cheatsheets/template-tags.md) |
 | Entity column types | [`cheatsheets/entity-column-types.md`](cheatsheets/entity-column-types.md) |
