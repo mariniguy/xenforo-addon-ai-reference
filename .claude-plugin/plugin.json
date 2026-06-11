@@ -1,0 +1,21 @@
+{
+  "name": "xenforo-addon-dev",
+  "version": "1.1.0",
+  "description": "Comprehensive XenForo 2.3+ add-on development reference for Claude. Loads accurate, idiomatic XenForo APIs (entities, finders, repositories, controllers, services, jobs, handlers, widgets, schema migrations, REST API) as on-demand context so Claude writes correct add-ons without hallucinating.",
+  "author": {
+    "name": "mariniguy",
+    "url": "https://github.com/mariniguy"
+  },
+  "homepage": "https://github.com/mariniguy/xenforo-addon-ai-reference",
+  "repository": "https://github.com/mariniguy/xenforo-addon-ai-reference",
+  "license": "MIT",
+  "keywords": [
+    "xenforo",
+    "xenforo-2.3",
+    "php",
+    "addon",
+    "forum",
+    "reference",
+    "context-pack"
+  ]
+}
